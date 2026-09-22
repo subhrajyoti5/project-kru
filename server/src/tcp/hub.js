@@ -1,7 +1,7 @@
 const { WebSocketServer } = require('ws');
 const sessions = require('../services/session.service');
 
-const CONTROL_LIMIT = 8192;
+const MESSAGE_LIMIT = 256 * 1024;
 
 function attachTcp(httpServer, udpPort) {
   const wss = new WebSocketServer({ noServer: true });
@@ -28,29 +28,27 @@ function attachTcp(httpServer, udpPort) {
 
   wss.on('connection', (ws) => {
     ws.on('message', (data, isBinary) => {
-      if (isBinary || data.length > CONTROL_LIMIT) {
-        ws.close(1009, 'TCP carries session control only');
+      if (data.length > MESSAGE_LIMIT) {
+        ws.close(1009, 'Message is too large');
         return;
       }
-      let message;
-      try {
-        message = JSON.parse(data.toString());
-      } catch {
-        ws.close(1003, 'JSON control messages only');
-        return;
-      }
-      if (message.type === 'file' || message.bytes) {
-        ws.close(1008, 'File bytes belong on UDP');
-        return;
-      }
-      if (message.type === 'join') {
-        join(ws, message, udpPort, peers);
-        return;
+      if (!isBinary) {
+        let message;
+        try {
+          message = JSON.parse(data.toString());
+        } catch {
+          ws.close(1003, 'Control messages must be JSON');
+          return;
+        }
+        if (message.type === 'join') {
+          join(ws, message, udpPort, peers);
+          return;
+        }
       }
       const room = peers.get(ws.sessionId);
       if (!room || (ws !== room.browser && ws !== room.android)) return;
       const other = ws === room.browser ? room.android : room.browser;
-      if (other && other.readyState === 1) other.send(data.toString());
+      if (other && other.readyState === 1) other.send(data, { binary: isBinary });
     });
 
     ws.on('close', () => {

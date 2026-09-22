@@ -1,8 +1,19 @@
 "use client";
 
-import type { FileEntry } from "@/types/filesystem";
+import { useSyncExternalStore } from "react";
+import { peerSession } from "@/lib/connection/peer-session";
 
-/** File listing waits for the LAN channel. This hook stays empty on purpose. */
-export function useFiles(): { entries: FileEntry[]; ready: boolean } {
-  return { entries: [], ready: false };
+export function useFiles() {
+  const snapshot = useSyncExternalStore(
+    (listener) => peerSession.subscribe(listener),
+    () => peerSession.snapshot,
+    () => peerSession.snapshot,
+  );
+  return {
+    entries: snapshot.entries,
+    path: snapshot.path,
+    transfers: snapshot.transfers,
+    previewUrl: snapshot.previewUrl,
+    ready: snapshot.status === "connected",
+  };
 }

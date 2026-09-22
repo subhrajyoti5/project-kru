@@ -21,7 +21,8 @@ export default function FilesPage() {
         <ConnectionStatus status={device?.connectionStatus ?? "idle"} />
       </header>
       <DeviceCard device={device} />
-      <FileManager entries={files.entries} />
+      {files.ready ? <p className="text-sm text-emerald-800">Connected. Files move over the LAN data channel, not the server.</p> : <p className="text-sm text-stone-600">Connect the phone from the QR page first.</p>}
+      <FileManager entries={files.entries} path={files.path} transfers={files.transfers} previewUrl={files.previewUrl} />
     </main>
   );
 }

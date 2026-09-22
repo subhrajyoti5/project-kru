@@ -6,4 +6,5 @@ export type FileEntry = {
   size: number;
   modifiedAt: string;
   isDirectory: boolean;
+  mimeType?: string;
 };

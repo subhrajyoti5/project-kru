@@ -1,5 +1,6 @@
 "use client";
-
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ConnectionStatus } from "@/components/connection/connection-status";
 import { DeviceCard } from "@/components/connection/device-card";
 import { QrDisplay } from "@/components/qr/qr-display";
@@ -10,11 +11,18 @@ import { useSession } from "@/hooks/use-session";
 import type { SessionStatus } from "@/types/session";
 
 export default function ConnectPage() {
+  const router = useRouter();
   const { session, qrPayload, error } = useSession();
   const connection = useConnection(session);
   const lan = useLanChannel(qrPayload);
   const status: SessionStatus | "idle" =
     lan.phase === "connected" || connection.status === "connected" ? "connected" : connection.status;
+
+  useEffect(() => {
+    if (status === "connected") {
+      router.push("/files");
+    }
+  }, [status, router]);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-12">

@@ -32,6 +32,14 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    // Realme/ColorOS cannot map the page-aligned native libraries inside the APK.
+    // The Dart VM then reports "VM snapshot invalid" and the process exits.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 }
 
 kotlin {
