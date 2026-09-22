@@ -35,7 +35,8 @@ export default function ConnectPage() {
           <SessionStatusText status={status} />
           <DeviceCard device={connection.device} />
           <p className="max-w-sm text-sm text-stone-600">
-            Unable to connect if the phone and this computer are on different networks. Both need the same Wi-Fi.
+            Use the same home Wi-Fi, or join this phone&apos;s hotspot from the laptop. College and
+            enterprise Wi-Fi is refused because those firewalls block the connection.
           </p>
         </div>
       </div>

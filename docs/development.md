@@ -38,9 +38,10 @@ flutter run
 
 The connection milestone is implemented:
 
-- website creates a session, renders the QR, and opens a WebRTC offer
-- phone scans or pastes the payload, pairs, and answers
-- the page shows Connected when the data channel opens
+- website creates a session, renders the QR, and opens a TCP WebSocket
+- phone scans or pastes the payload, pairs, and joins the same TCP socket
+- the page shows Connected when both TCP sockets are up
+- file bytes go out as UDP datagrams after that
 
 File listing and transfers are still not implemented. Do not add a database or cloud storage to add them.
 

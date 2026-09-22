@@ -65,6 +65,13 @@ function publicView(session) {
           deviceId: session.device.deviceId,
           name: session.device.name,
           platform: session.device.platform,
+          manufacturer: session.device.manufacturer || '',
+          model: session.device.model || '',
+          brand: session.device.brand || '',
+          androidVersion: session.device.androidVersion || '',
+          sdkInt: session.device.sdkInt || '',
+          network: session.device.network || '',
+          ipAddress: session.device.ipAddress || '',
           connectionStatus: session.status,
         }
       : null,
@@ -92,11 +99,24 @@ function pair(sessionId, token, device, now = Date.now()) {
     deviceId: device.deviceId,
     name: device.name,
     platform: device.platform || 'android',
+    manufacturer: typeof device.manufacturer === 'string' ? device.manufacturer : '',
+    model: typeof device.model === 'string' ? device.model : '',
+    brand: typeof device.brand === 'string' ? device.brand : '',
+    androidVersion: typeof device.androidVersion === 'string' ? device.androidVersion : '',
+    sdkInt: typeof device.sdkInt === 'string' ? device.sdkInt : '',
+    network: typeof device.network === 'string' ? device.network : '',
+    ipAddress: '',
   };
   if (session.status === 'pending') {
     session.status = 'paired';
   }
   return session;
+}
+
+function setDeviceAddress(sessionId, address) {
+  const session = sessions.get(sessionId);
+  if (!session?.device || typeof address !== 'string' || !address) return;
+  session.device.ipAddress = address.replace(/^::ffff:/, '');
 }
 
 function heartbeat(sessionId, token, now = Date.now()) {
@@ -150,6 +170,7 @@ module.exports = {
   publicView,
   qrPayload,
   pair,
+  setDeviceAddress,
   heartbeat,
   close,
   markConnected,

@@ -28,11 +28,11 @@ Response `201`:
 }
 ```
 
-The example QR in the product brief included `browserIp` and `browserPort`. Those fields are omitted. A page cannot reliably learn the computer's LAN address, and putting one in the QR pushes the phone toward a connection the browser cannot complete under HTTPS. The browser endpoint is discovered later as a WebRTC host candidate.
+The example QR in the product brief included `browserIp` and `browserPort`. Those fields are omitted. A page cannot reliably learn the computer's LAN address, and putting one in the QR pushes the phone toward a connection the browser cannot complete under HTTPS. The browser and the phone then open a TCP WebSocket to that host. File bytes use the UDP port named in the `established` message, not this socket.
 
 Default lifetime is 5 minutes. Status values: `pending`, `paired`, `connected`, `expired`, `closed`.
 
-`connected` is set only after the WebRTC data channel opens. Pairing alone sets `paired`, which the website shows as "Connecting...".
+`connected` is set when both the browser and the phone have joined the TCP socket at `/sessions/:sessionId/tcp`. Pairing alone sets `paired`, which the website shows as "Connecting...".
 
 `POST /sessions/:sessionId/connected` with the bearer token moves `paired` to `connected`. Calling it before pairing returns `409`.
 

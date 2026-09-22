@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:kru_android/core/network/network_place.dart';
 import 'package:kru_android/core/network/signaling_client.dart';
 import 'package:kru_android/features/connection/application/connection_controller.dart';
 import 'package:kru_android/features/device/application/device_identity.dart';
@@ -35,7 +36,13 @@ class _ConnectionPageState extends State<ConnectionPage> {
       _ownedClient = SignalingClient();
       _controller = ConnectionController(signaling: _ownedClient!);
     }
-    _subscription = _controller.connect(widget.payload, DeviceIdentity().current).listen(
+    _start();
+  }
+
+  Future<void> _start() async {
+    final place = await NetworkPlace.current();
+    final device = await DeviceIdentity().load(place);
+    _subscription = _controller.connect(widget.payload, device).listen(
       (snapshot) {
         if (!mounted) return;
         setState(() => _snapshot = snapshot);

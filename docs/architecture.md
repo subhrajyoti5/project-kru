@@ -15,7 +15,7 @@ Android scanner
    |
    | POST /sessions/:id/pair
    v
-LAN connection (WebRTC data channel — not built yet)
+LAN session over TCP, file bytes over UDP
    |
    v
 File service on the phone
@@ -24,20 +24,17 @@ File service on the phone
 Browser file manager
 ```
 
-## Why the direct channel is WebRTC
+## Transports
 
-A hosted Next.js site is HTTPS. The day-1 question is how that page and the phone can still move bytes on the LAN.
+Connection establishment is TCP. The browser and the phone each open a WebSocket to `/sessions/:id/tcp` on the signaling server. The session becomes connected only after both sockets have joined.
 
-| Option | What it is | Verdict for V1 |
-| --- | --- | --- |
-| A | Android runs an HTTP or WebSocket server; the page connects to `http://192.168.x.x` or `ws://` | Blocked. An HTTPS page cannot open `http:` or `ws:` (mixed content). A public CA will not issue a certificate for a private IP. Chrome local-network access also gates a public origin that fetches a private address. |
-| B | WebRTC data channel. SDP and ICE go through this server. Media and file bytes go host-to-host on the LAN. | Chosen. A secure page may open a data channel. On the same subnet, host ICE candidates are gathered without STUN, TURN, or a relay. |
-| C | The browser connects to a local service the phone exposes | Same mixed-content and private-network blocks as A. |
-| D | mDNS discovery plus a LAN WebSocket | Discovery from a page is browser-specific, and `ws://` is still mixed content from HTTPS. |
+File bytes are UDP. After TCP is up, the server tells both sides the UDP port. The phone sends file datagrams there. The TCP socket closes if a frame carries file bytes.
 
-WebRTC is chosen because the other options fail in a normal browser on a hosted HTTPS origin. It is not chosen because it is popular. The browser creates the data channel named `kru` and posts the offer. The phone answers after it scans the QR. When the channel opens, the browser marks the session `connected` and the page shows Connected. Offer and answer messages replace older signals from the same side so a restarted page does not leave a stale offer.
+Three networks are recognized:
 
-Guest Wi-Fi that isolates clients blocks every direct option, including WebRTC host candidates. The UI must say the phone and computer need the same Wi-Fi. There is no WAN fallback.
+- Home router: the phone and the laptop are clients of the same personal modem or router. The session is allowed.
+- Phone hotspot: the laptop joins the hotspot served by the phone. That path is allowed, including when the phone's upstream link is a restricted network, because the laptop talks to the phone on the hotspot itself.
+- College or enterprise Wi-Fi: refused. These networks use 802.1X or a captive portal and their firewalls block phone-to-laptop traffic. The laptop refuses to create a session when its Wi-Fi authentication is enterprise. The phone refuses to pair when it is a client of that kind of network and its hotspot is off.
 
 ## What is intentionally absent
 

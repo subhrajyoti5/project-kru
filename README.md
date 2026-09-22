@@ -4,7 +4,7 @@ Browse an Android phone from a desktop browser on the same Wi-Fi.
 
 The website generates a temporary QR code. The Android app scans it. Files are not uploaded to the server. The server only keeps the pairing session in memory.
 
-Read [docs/architecture.md](docs/architecture.md) before changing the connection path. The direct LAN channel is a WebRTC data channel because an HTTPS page cannot call `http://` or `ws://` on the phone. That channel is not implemented yet.
+Read [docs/architecture.md](docs/architecture.md) before changing the connection path. The session is established over TCP. File bytes move over UDP.
 
 ```text
 android/    Flutter scanner and future file service

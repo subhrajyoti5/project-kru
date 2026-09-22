@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createSession, getSession } from "@/lib/api/client";
+import { rememberSession } from "@/lib/session-store";
 import type { QrPayload, Session } from "@/types/session";
 
 export function useSession() {
@@ -18,6 +19,10 @@ export function useSession() {
         if (stopped) return;
         setSession(created.session);
         setQrPayload(created.qrPayload);
+        rememberSession({
+          sessionId: created.session.sessionId,
+          token: created.qrPayload.token,
+        });
         timer = setInterval(() => {
           getSession(created.session.sessionId, created.qrPayload.token)
             .then((next) => {

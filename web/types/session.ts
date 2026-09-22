@@ -1,3 +1,5 @@
+import type { Device } from "./device";
+
 export type SessionStatus = "pending" | "paired" | "connected" | "expired" | "closed";
 
 export type Session = {
@@ -6,12 +8,7 @@ export type Session = {
   createdAt: string;
   expiresAt: string;
   status: SessionStatus;
-  device: {
-    deviceId: string;
-    name: string;
-    platform: string;
-    connectionStatus: SessionStatus;
-  } | null;
+  device: Device | null;
 };
 
 export type QrPayload = {

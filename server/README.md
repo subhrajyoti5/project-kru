@@ -2,7 +2,7 @@
 
 Node.js and Express. Sessions live in memory. There is no database and no file upload route.
 
-The server creates a short-lived pairing session and stores WebRTC signaling messages (offer, answer, ICE, bye). It must not receive file bytes.
+The server creates a short-lived pairing session and accepts the TCP WebSocket used to establish it. File bytes are accepted only on the UDP socket. They are not forwarded on the TCP socket.
 
 ```powershell
 cd server

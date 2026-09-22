@@ -107,7 +107,12 @@ class SignalingClient {
     bool bearer = false,
   }) async {
     final uri = payload.signalingUrl.replace(path: path, queryParameters: query);
-    final request = await _http.openUrl(method, uri);
+    final HttpClientRequest request;
+    try {
+      request = await _http.openUrl(method, uri);
+    } on SocketException {
+      throw AppException(_unreachable(payload), code: 'lan');
+    }
     if (bearer) {
       request.headers.set(HttpHeaders.authorizationHeader, 'Bearer ${payload.token}');
     }
@@ -126,6 +131,16 @@ class SignalingClient {
       throw AppException('Signaling response was not an object.', code: 'signal');
     }
     return decoded.map((key, value) => MapEntry('$key', value));
+  }
+
+  String _unreachable(QrPayload payload) {
+    final host = payload.signalingUrl.host;
+    if (host == '127.0.0.1' || host == 'localhost' || host == '::1') {
+      return 'The QR code points at this phone, not the computer. '
+          'Restart the signaling server and scan the new code.';
+    }
+    return 'Unable to connect.\n\n'
+        'Make sure your phone and computer are connected to the same Wi-Fi network.';
   }
 
   String? _message(String body) {

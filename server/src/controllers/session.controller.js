@@ -1,6 +1,8 @@
 const sessions = require('../services/session.service');
+const { assertAllowedNetwork } = require('../network/place');
 
 function create(req, res) {
+  assertAllowedNetwork();
   const session = sessions.createSession();
   res.status(201).json({
     session: sessions.publicView(session),

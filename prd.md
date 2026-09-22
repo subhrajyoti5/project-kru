@@ -1,1360 +1,1205 @@
-# KRU — PRODUCT IMPLEMENTATION MASTER PROMPT
+You are implementing the FILE TRANSFER / FILE SHARING SERVICE for KRU.
 
-You are the lead engineer responsible for implementing the complete MVP of **KRU**, an Android-to-desktop browser file manager.
+IMPORTANT:
+The repository already exists. DO NOT recreate the project or scaffold a new application.
 
-The repository has ALREADY been scaffolded.
-
-Do NOT recreate the project structure from scratch.
-
-The current repository looks approximately like:
-
-```text
+Repository:
 project-kru/
-├── android/
-├── docs/
-├── scripts/
-├── server/
-├── web/
-├── .gitignore
-├── LICENSE
-├── package-lock.json
-├── prd.md
-└── README.md
-```
 
-Work inside this existing repository.
+Existing structure:
+- android/
+- web/
+- server/
+- docs/
+- scripts/
+- prd.md
+- README.md
 
----
+First inspect the existing implementation and architecture before modifying anything.
 
-# 1. PRODUCT IDEA
+==================================================
+PRODUCT REQUIREMENT
+==================================================
 
-KRU is a **LAN-first Android file manager for desktop browsers**.
+KRU is a LAN-first Android file manager.
 
-The core product principle is:
+The user opens KRU in a desktop browser.
 
-> **Don't send files. Access your phone.**
+Flow:
 
-Instead of:
+1. Desktop website generates a temporary connection QR code.
+2. Android KRU app scans the QR code.
+3. Both devices are on the SAME LOCAL Wi-Fi network.
+4. Android and browser establish a direct peer-to-peer connection.
+5. Website shows "Connected".
+6. Browser can browse Android-accessible files.
+7. Browser can download files from Android.
+8. Browser can upload files to Android.
+9. Browser can rename, delete and create folders.
+10. Actual file bytes must NOT pass through the backend server.
 
-```text
-Phone
-  ↓
-Select file
-  ↓
-Send
-  ↓
-Choose computer
-```
+The backend is only for:
+- session creation
+- QR/session information
+- WebRTC signaling
+- connection lifecycle
 
-the user should experience:
+The backend MUST NOT become a file proxy.
 
-```text
-Desktop Browser
-      ↓
-Connect phone
-      ↓
-Phone filesystem appears
-      ↓
-Browse
-      ↓
-Download / Upload / Manage
-```
+==================================================
+TRANSPORT REQUIREMENT
+==================================================
 
-The desktop browser should feel like a file explorer for the Android phone.
+Use a UDP-based transport for the actual device-to-device file transfer.
 
----
+CRITICAL BROWSER CONSTRAINT:
 
-# 2. EXACT USER FLOW
+A normal web browser cannot directly create arbitrary raw UDP sockets.
 
-This flow is NON-NEGOTIABLE.
+Therefore DO NOT implement:
 
-## Step 1 — Desktop
+Browser -> raw UDP socket -> Android
 
-The user opens:
+Instead use:
 
-```text
-KRU website
-```
-
-The website displays:
-
-```text
-Connect your Android phone
-
-┌─────────────────┐
-│                 │
-│    QR CODE      │
-│                 │
-└─────────────────┘
-
-Scan this QR code using the KRU Android app.
-```
-
-The **website generates the QR code**.
-
----
-
-# Step 2 — Android
-
-The user opens the KRU Android application.
-
-The Android application has:
-
-```text
-Scan QR
-```
-
-The user scans the QR code currently displayed on the desktop website.
-
-The Android application decodes the QR payload.
-
----
-
-# Step 3 — LAN Connection
-
-The Android app determines the connection information contained in the QR/session.
-
-The Android device and desktop must be on the **same local Wi-Fi network**.
-
-The app establishes a direct local connection to the desktop/browser.
-
-The website changes:
-
-```text
-Connecting...
-```
-
-to:
-
-```text
-● Connected
-```
-
-within a few seconds under normal LAN conditions.
-
----
-
-# Step 4 — Phone Files
-
-After connection:
-
-```text
-Android phone
-      ↓
-Accessible filesystem/media
-      ↓
-Desktop browser
-```
-
-The desktop browser displays the phone's accessible files.
-
-The user can navigate them like a normal file explorer.
-
----
-
-# 3. IMPORTANT QR DIRECTION
-
-The direction MUST remain:
-
-```text
-WEBSITE
-   │
-   │ generates QR
-   ▼
-QR CODE
-   │
-   │ scanned by
-   ▼
-ANDROID APP
-   │
-   ▼
-LAN CONNECTION
-   │
-   ▼
-DESKTOP BROWSER
-```
-
-Do NOT implement:
-
-```text
-Android → QR → Website scanner
-```
-
-The Android application is the scanner.
-
-The website is the QR generator/display.
-
----
-
-# 4. LAN-ONLY MVP
-
-The first release MUST work only when:
-
-```text
-Android phone
-      +
-Desktop
-      ↓
-Same Wi-Fi / LAN
-```
-
-Do NOT implement WAN connectivity.
-
-Do NOT implement:
-
-* STUN
-* TURN
-* Cloud relay
-* Internet file transfer
-* Remote access
-* Cloud sync
-* Internet-based device access
-
-These are future versions.
-
----
-
-# 5. PRIVACY ARCHITECTURE
-
-The product is local-first.
-
-The actual file data should travel:
-
-```text
-Android
-   ⇄
-Desktop Browser
-```
-
-over the local network.
-
-The backend MUST NOT become a file-transfer proxy.
-
-The backend MUST NOT receive:
-
-* photos
-* videos
-* documents
-* arbitrary files
-* file contents
-
-The backend may only assist with:
-
-* temporary session creation
-* pairing
-* connection metadata
-* signaling if absolutely necessary
-
-For MVP:
-
-```text
-Database: NONE
-Cloud storage: NONE
-User accounts: NONE
-```
-
----
-
-# 6. EXISTING STACK
-
-Do not replace the existing stack.
-
-## Android
-
-```text
-Flutter
-Dart
-Android SDK
-Kotlin when native Android APIs are required
-```
-
-## Web
-
-```text
-Next.js
-React
-TypeScript
-Tailwind CSS
-App Router
-```
-
-## Server
-
-```text
-Node.js
-Express
-JavaScript
-```
-
-## Database
-
-None.
-
-## Cloud file storage
-
-None.
-
-## C++
-
-Not required.
-
----
-
-# 7. DEVELOPMENT PRIORITY
-
-Build in this exact order.
-
-```text
-1. LAN connection proof
-2. QR pairing
-3. Secure session
-4. Android file discovery
-5. Browser file explorer
-6. Download
-7. Upload
-8. File management
-9. Preview
-10. Error handling
-11. Polish
-```
-
-Do not build the entire UI first.
-
-Do not create fake functionality.
-
-Do not use mocked file data once the real Android filesystem layer is available.
-
----
-
-# 8. PHASE 0 — INSPECT THE REPOSITORY
-
-Before modifying anything:
-
-1. Inspect the existing repository.
-2. Inspect `prd.md`.
-3. Inspect `README.md`.
-4. Inspect `docs/`.
-5. Inspect the Android project.
-6. Inspect the Next.js project.
-7. Inspect the server.
-8. Determine what is already implemented.
-9. Do not overwrite existing working code unnecessarily.
-
-Then create/update:
-
-```text
-docs/implementation-status.md
-```
-
-containing:
-
-```text
-Component
-Current status
-Missing functionality
-Next action
-```
-
----
-
-# 9. PHASE 1 — PROVE LAN COMMUNICATION
-
-This is the most important technical milestone.
-
-Before implementing the complete product, create the smallest possible working connection.
-
-The target is:
-
-```text
-Windows Chrome/Edge
-        ⇅
-      LAN
-        ⇅
-Android
-```
-
-The Android application should be able to establish a local authenticated connection with the browser.
-
-Test:
-
-* Same Wi-Fi
-* Different Wi-Fi
-* Phone hotspot
-* Router isolation if applicable
-* Windows firewall behavior
-* Android permissions
-* Browser security restrictions
-* HTTPS → local network communication
-* CORS
-* WebSocket behavior
-* Connection timeout
-* Disconnect/reconnect
-
-Do not assume that a hosted HTTPS page can freely communicate with arbitrary HTTP localhost/LAN endpoints.
-
-Investigate the actual browser security model.
-
-If the initial architecture has a browser security problem, solve it before proceeding.
-
----
-
-# 10. CONNECTION ARCHITECTURE
-
-Choose the simplest architecture that actually works.
-
-Evaluate:
-
-### Option A — Android local server
-
-```text
 Browser
-   ↓
-LAN
-   ↓
-Android HTTP/WebSocket server
-```
-
-### Option B — WebRTC
-
-```text
-Browser
-   ⇄
-WebRTC
-   ⇄
+   |
+   | WebRTC DataChannel
+   |
+   | SCTP
+   |
+   | DTLS
+   |
+   | UDP
+   |
 Android
-```
 
-### Option C — Local web application
+Use WebRTC DataChannel as the browser-compatible UDP-based P2P transport.
 
-```text
-Android
- ├── local server
- └── local UI/API
-        ↑
-     Browser
-```
+Prefer a DIRECT LAN peer connection.
 
-### Option D — Another browser-compatible LAN architecture
+Do NOT introduce TURN/cloud relay for V1.
 
-You may choose another architecture if it is technically more reliable.
+STUN may be used only if required for WebRTC candidate discovery, but the architecture must prioritize direct local-network candidates.
 
-Do NOT choose WebRTC just because it sounds advanced.
+The implementation must verify that the selected ICE candidate pair is local/LAN where possible.
 
-Optimize for:
+==================================================
+CORE ARCHITECTURE
+==================================================
 
-```text
-Reliability
-+
-Security
-+
-One-week implementation speed
-```
+Implement the system as:
 
----
+                 KRU WEB
+                    |
+                    |
+             WebRTC DataChannel
+                    |
+             UDP-based transport
+                    |
+             KRU ANDROID APP
+                    |
+              File System APIs
 
-# 11. QR SESSION
+Existing backend:
 
-The desktop website should request a temporary session.
+Desktop <---- signaling ----> Server <---- signaling ----> Android
 
-Conceptually:
+Server responsibilities:
 
-```text
-Browser
-   ↓
-POST /session
-   ↓
-Server
-   ↓
-temporary session
-   ↓
-Browser
-   ↓
-Generate QR
-```
+- create temporary session
+- store temporary signaling state
+- exchange SDP offer/answer
+- exchange ICE candidates
+- authenticate temporary session
+- expire sessions
+- notify disconnect
 
-The QR should contain only temporary connection information.
+Server responsibilities MUST NOT include:
 
-Example:
+- file contents
+- file upload
+- file download
+- file storage
+- file buffering
+- file proxying
 
-```json
-{
-  "version": 1,
-  "sessionId": "...",
-  "browserId": "...",
-  "endpoint": "...",
-  "token": "...",
-  "expiresAt": "..."
-}
-```
+==================================================
+FIRST TASK: INSPECT EXISTING CODE
+==================================================
 
-Do not put file data in the QR.
+Before implementing anything:
 
-Do not put permanent credentials in the QR.
+1. Inspect:
+   - prd.md
+   - README.md
+   - docs/
+   - server/
+   - web/
+   - android/
 
----
+2. Identify:
+   - existing QR/session implementation
+   - existing server APIs
+   - existing WebSocket implementation
+   - existing Android networking code
+   - existing Flutter architecture
+   - existing state management
+   - existing UI components
+   - existing file-system abstraction
 
-# 12. SESSION SECURITY
+3. Do NOT replace working architecture unnecessarily.
 
-Every pairing session must have:
+4. Create/update:
 
-* Random session ID
-* Cryptographically random temporary token
-* Expiration time
-* One-time or limited-use pairing behavior
-* Session status
-* Connection status
+docs/file-transfer-architecture.md
 
-Example states:
+Document the actual architecture you implement.
 
-```text
-CREATED
-WAITING
-SCANNED
-AUTHENTICATING
+==================================================
+PHASE 1 — PEER CONNECTION PROOF
+==================================================
+
+Before implementing file transfer, prove that the browser and Android app can establish a WebRTC DataChannel over the SAME Wi-Fi network.
+
+Implement:
+
+Browser:
+- RTCPeerConnection
+- createDataChannel("kru")
+- SDP offer
+- ICE candidate handling
+- DataChannel state management
+
+Android:
+- WebRTC peer connection
+- receive SDP offer
+- create SDP answer
+- ICE candidate handling
+- receive DataChannel
+
+Backend:
+- signaling only
+
+Connection states:
+
+IDLE
+CONNECTING
 CONNECTED
 DISCONNECTED
-EXPIRED
 FAILED
-```
 
----
+When DataChannel opens:
 
-# 13. WEBSITE
+Android sends:
 
-The website needs these primary screens.
+{
+  "type": "hello",
+  "protocolVersion": 1,
+  "device": {
+    "platform": "android"
+  }
+}
 
-## `/`
+Browser responds:
 
-Landing/connect page.
+{
+  "type": "hello_ack",
+  "protocolVersion": 1
+}
 
-```text
-KRU
+Display in browser:
 
-Access your Android phone
-from your browser.
-
-[ QR CODE ]
-
-Open KRU on Android
-and scan this code.
-```
-
-Connection status:
-
-```text
-Waiting for phone...
-```
-
-then:
-
-```text
-Connecting...
-```
-
-then:
-
-```text
 ● Connected
-```
 
----
+Do not proceed to file operations until this connection is reliable.
 
-# 14. FILE MANAGER
+==================================================
+PHASE 2 — DEFINE THE KRU DATA PROTOCOL
+==================================================
 
-After connection, route the user to the file manager.
+Create a formal application-level protocol over the WebRTC DataChannel.
 
-Suggested layout:
+Create:
 
-```text
-┌───────────────────────────────────────────────────────┐
-│ KRU                     Pixel / Android   ● Connected │
-├──────────────┬────────────────────────────────────────┤
-│              │                                        │
-│ Home         │ Home                                   │
-│              │                                        │
-│ Photos       │ 📁 DCIM                                │
-│ Videos       │ 📁 Downloads                           │
-│ Documents    │ 📁 Pictures                            │
-│ Downloads    │ 📁 Documents                           │
-│ Music        │ 📁 Music                               │
-│              │                                        │
-│              │                                        │
-└──────────────┴────────────────────────────────────────┘
-```
+docs/file-transfer-protocol.md
 
-The UI should resemble:
+Every message must have:
 
-> Windows Explorer / Finder
+{
+  "type": "...",
+  "requestId": "...",
+  ...
+}
 
-not:
+Use requestId for request/response correlation.
 
-> An admin dashboard.
+Define at minimum:
 
----
+connection:
+- hello
+- hello_ack
+- ping
+- pong
+- disconnect
 
-# 15. FILE OPERATIONS
+filesystem:
+- list_directory
+- directory_response
+- stat
+- stat_response
+- create_directory
+- rename
+- delete
+- operation_response
 
-Implement these operations.
+transfer:
+- download_request
+- download_start
+- download_chunk
+- download_complete
+- upload_request
+- upload_start
+- upload_chunk
+- upload_complete
+- transfer_cancel
+- transfer_error
 
-## Required
+==================================================
+PHASE 3 — FILESYSTEM API
+==================================================
 
-### Browse
+Android must expose ONLY files that Android allows the application to access.
 
-```text
-GET directory
-```
+DO NOT promise unrestricted access to:
 
-### Download
+/data
+/system
+/root
+or other protected Android directories.
 
-```text
-Android → Browser → Desktop
-```
-
-### Upload
-
-```text
-Desktop → Browser → Android
-```
-
-### Rename
-
-```text
-rename(file)
-```
-
-### Delete
-
-```text
-delete(file)
-```
-
-### Create folder
-
-```text
-mkdir(folder)
-```
-
-### Metadata
-
-Display:
-
-```text
-Name
-Type
-Size
-Modified time
-```
-
----
-
-# 16. ANDROID FILE ACCESS
-
-Do NOT assume unrestricted Android filesystem access.
-
-Use Android-supported APIs and permissions.
+Use Android-supported storage APIs.
 
 Prioritize:
 
-```text
-Photos
-Videos
-Downloads
-Documents
-Music
-User-accessible folders
-```
+- Pictures
+- DCIM
+- Movies
+- Downloads
+- Documents
+- Music
+- user-accessible folders
 
-The implementation must respect Android storage restrictions.
+Create a clean Android filesystem abstraction:
 
-If an operation requires Android authorization, implement the appropriate permission/request flow.
+FileSystemService
 
-Never bypass Android security restrictions.
+Example operations:
 
----
+listDirectory(path)
+stat(path)
+createDirectory(path)
+rename(path, newName)
+delete(path)
+openForRead(path)
+openForWrite(path)
 
-# 17. LARGE FILE TRANSFERS
+Never expose raw unrestricted filesystem access to the browser.
 
-Never load an entire large file into memory.
+==================================================
+PHASE 4 — PATH SECURITY
+==================================================
 
-Use:
+This is mandatory.
 
-```text
-streaming
-```
+The browser must NEVER be allowed to send arbitrary filesystem paths.
 
-or:
+Use a controlled root / document-tree abstraction.
 
-```text
-chunked transfer
-```
+Reject:
+
+../
+../../
+absolute paths outside the allowed root
+path traversal
+invalid filenames
+null bytes
+reserved paths
+protected Android directories
+
+Normalize and validate every path on Android.
+
+Never trust:
+
+- filename
+- path
+- size
+- MIME type
+- transfer ID
+- request ID
+
+from the browser.
+
+==================================================
+PHASE 5 — DIRECTORY BROWSING
+==================================================
+
+Implement:
+
+Browser:
+- root directory
+- folders
+- files
+- breadcrumb navigation
+- file name
+- type
+- size
+- modified time
+
+Android responds to:
+
+list_directory
 
 Example:
 
-```text
-video.mp4
+{
+  "type": "directory_response",
+  "requestId": "...",
+  "path": "/Downloads",
+  "entries": [
+    {
+      "name": "file.pdf",
+      "type": "file",
+      "size": 123456,
+      "modifiedAt": 1234567890,
+      "mimeType": "application/pdf"
+    }
+  ]
+}
 
-Chunk 1
-Chunk 2
-Chunk 3
-...
-Chunk N
-```
+Do not send file contents when listing directories.
 
-The browser should display:
+==================================================
+PHASE 6 — DOWNLOAD: ANDROID -> BROWSER
+==================================================
 
-```text
-video.mp4
+Implement browser download.
 
-████████████░░░░░░░░
-62%
+Flow:
 
-1.24 GB / 2.00 GB
-```
+Browser:
 
----
+download_request
+{
+  "type": "download_request",
+  "requestId": "...",
+  "path": "/Downloads/video.mp4"
+}
 
-# 18. TRANSFER SYSTEM
+Android:
 
-Create a transfer abstraction.
+1. validate path
+2. verify file exists
+3. obtain file metadata
+4. create transferId
+5. send download_start
 
-Example conceptual model:
+Example:
 
-```text
-Transfer
-├── id
-├── filename
-├── direction
-├── size
-├── transferred
-├── percentage
-├── status
-└── error
-```
+{
+  "type": "download_start",
+  "requestId": "...",
+  "transferId": "...",
+  "name": "video.mp4",
+  "size": 524288000,
+  "mimeType": "video/mp4"
+}
 
-States:
+Then transfer chunks.
 
-```text
+IMPORTANT:
+
+DO NOT load the entire file into RAM.
+
+Use streaming reads.
+
+==================================================
+PHASE 7 — UDP/WEBRTC CHUNK TRANSFER
+==================================================
+
+DataChannel messages have practical message-size limits.
+
+DO NOT send a 500 MB file as one DataChannel message.
+
+Implement chunking.
+
+Start with a conservative chunk size such as:
+
+64 KiB
+
+Make it configurable.
+
+Every chunk must contain:
+
+transferId
+sequenceNumber
+offset
+payloadLength
+checksum/hash if required
+
+Example conceptual packet:
+
+{
+  "type": "download_chunk",
+  "transferId": "...",
+  "sequence": 42,
+  "offset": 2752512,
+  "length": 65536,
+  "data": "..."
+}
+
+However, avoid inefficient JSON/base64 encoding for large binary payloads.
+
+For actual file payloads:
+
+USE BINARY DATA CHANNEL MESSAGES.
+
+Use a small control-message protocol plus binary chunk frames.
+
+For example:
+
+CONTROL:
+
+{
+  "type": "chunk",
+  "transferId": "...",
+  "sequence": 42,
+  "offset": 2752512,
+  "length": 65536
+}
+
+followed by:
+
+BINARY FRAME:
+[raw bytes]
+
+Design the framing so the receiver can unambiguously associate binary data with the transfer.
+
+Prefer a compact binary framing format if practical.
+
+==================================================
+IMPORTANT: RELIABILITY
+==================================================
+
+Do NOT assume UDP means unreliable file transfer.
+
+For file transfer, data integrity is mandatory.
+
+Use WebRTC DataChannel configured as:
+
+ordered = true
+reliable = true
+
+for the initial implementation.
+
+The underlying transport remains UDP-based while the DataChannel provides reliable ordered delivery.
+
+DO NOT implement your own unreliable UDP file-transfer protocol in V1.
+
+If later implementing an optimized unreliable mode, it must have:
+
+- sequence numbers
+- acknowledgements
+- retransmission
+- missing chunk detection
+- checksum validation
+- resume support
+
+But this is NOT required for V1.
+
+First make reliable transfer correct.
+
+==================================================
+PHASE 8 — BACKPRESSURE
+==================================================
+
+This is mandatory.
+
+Do NOT continuously call DataChannel.send() until the entire file is sent.
+
+Monitor:
+
+bufferedAmount
+
+Use:
+
+bufferedAmountLowThreshold
+
+Implement a send queue.
+
+Conceptually:
+
+while data remains:
+    if bufferedAmount is too high:
+        pause reading file
+        wait for bufferedamountlow
+    read next chunk
+    send chunk
+    update progress
+
+This prevents:
+
+- browser memory explosion
+- Android memory explosion
+- DataChannel saturation
+- UI freezing
+
+==================================================
+PHASE 9 — UPLOAD: BROWSER -> ANDROID
+==================================================
+
+Implement:
+
+PC file picker
+        |
+        v
+Browser
+        |
+        | WebRTC DataChannel
+        v
+Android
+        |
+        v
+local file
+
+Browser sends:
+
+upload_request
+
+Android validates:
+
+- filename
+- target directory
+- allowed path
+- file size
+- permissions
+
+Then:
+
+upload_start
+
+Browser streams chunks.
+
+Android writes chunks directly to disk.
+
+DO NOT hold the entire uploaded file in Android RAM.
+
+==================================================
+PHASE 10 — TRANSFER STATE MACHINE
+==================================================
+
+Every transfer must have:
+
 QUEUED
+PREPARING
 TRANSFERRING
 COMPLETED
 CANCELLED
 FAILED
-```
 
-Implement:
+Track:
 
-* Progress
-* Cancellation
-* Error handling
-* Multiple transfers if feasible
-* Retry where practical
+transferId
+filename
+direction
+totalBytes
+transferredBytes
+percentage
+startedAt
+completedAt
+error
 
----
+Browser UI should show:
 
-# 19. FILE PREVIEW
-
-Implement browser previews for supported files.
-
-At minimum:
-
-### Images
-
-```text
-jpg
-jpeg
-png
-webp
-gif
-```
-
-### Video
-
-Use browser-native support where available.
-
-Do not implement transcoding in V1.
-
----
-
-# 20. SEARCH
-
-Implement basic filename search.
+filename
+upload/download
+progress
+transferred / total
+percentage
+speed
+ETA
+cancel button
 
 Example:
 
-```text
-Search:
-resume
+video.mp4
+Downloading
+342 MB / 1.2 GB
+28%
+18.4 MB/s
+ETA 47 sec
+[Cancel]
 
-Results:
-resume.pdf
-resume-final.pdf
-resume-2026.pdf
-```
-
-Do not build a complex indexing engine for V1.
-
----
-
-# 21. ANDROID APP UX
-
-The Android application should remain extremely simple.
-
-Main screen:
-
-```text
-┌──────────────────────────┐
-│                          │
-│          KRU             │
-│                          │
-│   Connect to computer    │
-│                          │
-│     [ Scan QR Code ]     │
-│                          │
-│                          │
-│ Status: Disconnected     │
-│                          │
-└──────────────────────────┘
-```
-
-After scanning:
-
-```text
-Connecting...
-```
-
-Then:
-
-```text
-✓ Connected
-
-You can now manage your
-phone from your browser.
-```
-
-Do not turn the Android app into a giant file manager.
-
-The browser is the primary file-management interface.
-
----
-
-# 22. ANDROID QR SCANNER
-
-The Android app must:
-
-1. Request camera permission.
-2. Open QR scanner.
-3. Detect QR.
-4. Decode payload.
-5. Validate payload version.
-6. Validate expiration.
-7. Extract connection information.
-8. Attempt LAN connection.
-9. Authenticate.
-10. Report connection status.
-
-Invalid QR:
-
-```text
-Invalid KRU QR code.
-```
-
-Expired QR:
-
-```text
-This QR code has expired.
-Generate a new one from the website.
-```
-
-Different-network error:
-
-```text
-Couldn't connect.
-
-Make sure your phone and computer
-are connected to the same Wi-Fi network.
-```
-
----
-
-# 23. CONNECTION STATUS
-
-The website must clearly show:
-
-```text
-Waiting
-Connecting
-Connected
-Disconnected
-Failed
-```
-
-The Android app should show the same logical state.
-
-If the phone disappears:
-
-```text
-Phone disconnected.
-
-Trying to reconnect...
-```
-
-Use a heartbeat/ping mechanism where appropriate.
-
----
-
-# 24. DISCONNECT
-
-Provide:
-
-```text
-Disconnect
-```
-
-on the desktop.
-
-When disconnected:
-
-* Invalidate session where appropriate.
-* Stop file service access for that session.
-* Clear temporary connection state.
-* Return website to the QR screen.
-
----
-
-# 25. ERROR HANDLING
-
-Never show raw stack traces to users.
-
-Handle:
-
-* No Wi-Fi
-* Different networks
-* Invalid QR
-* Expired QR
-* Connection timeout
-* Android permission denied
-* File not found
-* File deleted during transfer
-* Storage full
-* Browser unsupported
-* Network interruption
-* Transfer cancellation
-
-User-facing messages should be concise and actionable.
-
----
-
-# 26. SECURITY
+==================================================
+PHASE 11 — CANCELLATION
+==================================================
 
 Implement:
 
-### Authentication
+transfer_cancel
 
-Temporary random token.
+Either side must be able to cancel.
 
-### Authorization
+Browser cancels:
 
-A paired browser can only access the currently exposed Android filesystem through the active session.
+transfer_cancel
 
-### Expiration
+Android must:
 
-Sessions expire automatically.
+- stop file read/write
+- close streams
+- release resources
+- remove partial file OR mark it as incomplete
+- notify browser
 
-### No permanent access
+Browser must stop processing the transfer.
 
-Scanning a QR must not create an everlasting connection.
+Never leave corrupted partial files pretending to be completed files.
 
-### No server file storage
+==================================================
+PHASE 12 — INTEGRITY
+==================================================
 
-The backend must never receive file contents.
+Every completed transfer must be validated.
 
-### Input validation
+At minimum:
 
-Validate:
+- expected byte count
+- actual byte count
 
-* Paths
-* filenames
-* session IDs
-* tokens
-* commands
-* file operations
+Prefer SHA-256 for completed files.
 
-Prevent path traversal.
+For example:
 
-Never allow:
+download_start:
+expectedSize
 
-```text
-../../../../
-```
+download_complete:
+actualSize
+sha256
 
-or equivalent path manipulation to escape the intended accessible filesystem.
+Browser verifies the received file.
 
----
+For upload:
 
-# 27. API DESIGN
+Browser calculates hash if practical.
 
-Keep APIs minimal.
+Android calculates hash after writing.
 
-Potential server APIs:
+Compare hashes.
 
-```text
-POST /api/session
-GET  /api/session/:id
-POST /api/session/:id/expire
-GET  /api/health
-```
+If mismatch:
 
-Do NOT create:
+FAILED
 
-```text
-POST /upload-to-server
-POST /files
-POST /media
-```
+Never show:
 
-on the cloud backend.
+"Transfer complete"
 
-File APIs should exist between the browser and Android connection layer.
+unless integrity validation succeeds.
 
----
+==================================================
+PHASE 13 — FILE OPERATIONS
+==================================================
 
-# 28. WEB COMPONENT ARCHITECTURE
+Implement:
 
-Keep UI separate from networking.
+Create folder
+Rename
+Delete
 
-Suggested:
+All operations must:
 
-```text
-web/
-├── app/
-├── components/
-│   ├── qr/
-│   ├── connection/
-│   ├── file-manager/
-│   └── transfers/
-│
-├── hooks/
-│   ├── useSession.ts
-│   ├── useConnection.ts
-│   ├── useFiles.ts
-│   └── useTransfer.ts
-│
-├── lib/
-│   ├── connection/
-│   ├── filesystem/
-│   ├── session/
-│   └── utils/
-│
-└── types/
-```
+1. receive request
+2. validate request
+3. validate path
+4. perform operation
+5. return result
 
-React components should not directly contain low-level network protocols.
+Example:
 
----
+{
+  "type": "operation_response",
+  "requestId": "...",
+  "success": true
+}
 
-# 29. ANDROID ARCHITECTURE
+Errors:
 
-Keep these layers separate:
+{
+  "type": "operation_response",
+  "requestId": "...",
+  "success": false,
+  "error": {
+    "code": "PERMISSION_DENIED",
+    "message": "..."
+  }
+}
 
-```text
-Presentation
-      ↓
-Application / State
-      ↓
-Domain
-      ↓
-Data
-      ↓
-Android / Network / Filesystem
-```
+Define standard error codes.
 
-The QR scanner should not directly manipulate filesystem code.
+==================================================
+PHASE 14 — PREVIEW
+==================================================
 
-The filesystem service should not know about UI widgets.
+Implement browser-side previews for:
 
-The networking layer should not contain UI logic.
+Images
+Videos
+PDFs where browser supports them
 
----
+Do not transfer the entire file unnecessarily just to display a preview.
 
-# 30. STATE MANAGEMENT
+For initial MVP:
 
-Use a lightweight state-management solution appropriate for the existing Flutter project.
+Use download/streaming-based preview where practical.
 
-Do not introduce a massive architecture/framework unless needed.
+Do not build a separate media server unless technically required.
 
-At minimum manage:
+==================================================
+PHASE 15 — LARGE FILE SUPPORT
+==================================================
 
-```text
-ConnectionState
-SessionState
-DeviceState
-FileState
-TransferState
-```
+Must test:
 
----
+10 MB
+100 MB
+500 MB
+1 GB+
 
-# 31. TESTING
+The implementation must:
 
-Implement tests for the critical parts.
+- stream
+- chunk
+- apply backpressure
+- avoid whole-file RAM usage
+- handle disconnect
+- report errors
+- verify integrity
 
-## Server
+Memory usage should remain approximately independent of total file size.
 
-* Session creation
-* Token generation
-* Expiration
-* Invalid sessions
+==================================================
+PHASE 16 — DISCONNECTION HANDLING
+==================================================
 
-## Android
+If WebRTC disconnects:
 
-* QR payload validation
-* Session validation
-* File listing
-* Path validation
+Browser must show:
 
-## Web
+● Disconnected
 
-* Session state
-* Connection state
-* File navigation
-* Transfer state
+Active transfers:
 
----
+FAILED or INTERRUPTED
 
-# 32. REAL DEVICE TESTING
+Do not pretend they completed.
 
-The final MVP MUST be tested with:
+Release:
 
-```text
-Windows laptop/desktop
-+
-Android physical device
-+
-same Wi-Fi router
-```
+- file handles
+- transfer queues
+- timers
+- event listeners
+- DataChannel resources
 
-Do not consider localhost-only testing sufficient.
+Session must be invalidated appropriately.
+
+==================================================
+PHASE 17 — SECURITY
+==================================================
+
+Security requirements:
+
+1. Temporary session ID.
+2. Cryptographically random authentication token.
+3. Short session lifetime.
+4. Token must not be reusable after expiration.
+5. Android must verify session authorization.
+6. Browser must not gain permanent filesystem access.
+7. Server must never receive file contents.
+8. Server logs must not contain file contents.
+9. Validate every filesystem path.
+10. Validate every operation.
+11. Limit concurrent transfers.
+12. Apply reasonable maximum message sizes.
+13. Reject malformed protocol messages.
+14. Prevent request flooding.
+15. Clean up expired sessions.
+
+Do not add accounts in V1.
+
+==================================================
+PHASE 18 — WEB UI
+==================================================
+
+After connection:
+
+Desktop UI:
+
+------------------------------------------------
+KRU
+● Connected
+
+Phone
+  > Internal Storage
+      > DCIM
+      > Downloads
+      > Pictures
+      > Documents
+      > Music
+
+------------------------------------------------
+
+File table:
+
+Name | Type | Size | Modified | Actions
+
+Actions:
+
+- Open
+- Download
+- Rename
+- Delete
+
+Top actions:
+
+[Upload]
+[New Folder]
+[Refresh]
+
+Transfers panel:
+
+Transfers
+-------------------------------
+video.mp4
+↓ Downloading
+342 MB / 1.2 GB
+18.4 MB/s
+[Cancel]
+-------------------------------
+
+Keep the interface simple.
+
+Do not turn KRU into a generic cloud-drive UI.
+
+==================================================
+PHASE 19 — ANDROID UI
+==================================================
+
+Android should remain minimal.
+
+Main screen:
+
+KRU
+
+[ Scan QR ]
+
+Connected:
+Desktop Chrome
+● Connected
+
+[ Disconnect ]
+
+Do not build a complete Android file manager.
+
+The browser is the primary file-management interface.
+
+==================================================
+PHASE 20 — PERFORMANCE
+==================================================
+
+Measure:
+
+- connection establishment time
+- DataChannel open time
+- transfer throughput
+- CPU usage
+- memory usage
+- time to first byte
+- large-file transfer stability
+
+Log development diagnostics such as:
+
+[WebRTC]
+ICE state: connected
+DataChannel: open
+Candidate type: host
+Transport: UDP
+
+[Transfer]
+ID: abc123
+Direction: DOWNLOAD
+Size: 524288000
+Chunk: 65536
+Speed: 28.4 MB/s
+
+Do not expose sensitive file contents in logs.
+
+==================================================
+PHASE 21 — TESTING
+==================================================
+
+Add automated tests where practical.
+
+Server:
+
+- session creation
+- token validation
+- expiration
+- signaling
+- invalid messages
+- disconnect
+
+Android:
+
+- path validation
+- filesystem operations
+- file metadata
+- chunk writing
+- checksum validation
+- cancellation
+- permission errors
+
+Web:
+
+- connection state
+- directory navigation
+- transfer state
+- progress calculation
+- cancellation
+- error handling
+
+==================================================
+PHASE 22 — PHYSICAL LAN TEST
+==================================================
+
+This is mandatory.
+
+Test with:
+
+Device A:
+Windows desktop + Chrome/Edge
+
+Device B:
+Android phone
+
+Both connected to:
+
+SAME Wi-Fi router
 
 Test:
 
-```text
-Phone → PC
-PC → Phone
-```
-
-with:
-
-* Small image
-* PDF
-* Large video
-* Folder
-* Rename
-* Delete
-
----
-
-# 33. PERFORMANCE TARGET
-
-For a normal local network:
-
-* Connection should normally complete within a few seconds.
-* Directory listing should feel immediate for ordinary directories.
-* File transfers should use streaming/chunking.
-* UI should remain responsive during transfers.
-* Large files should not cause excessive memory usage.
-
-Do not hard-code unrealistic throughput guarantees.
-
----
-
-# 34. UI DESIGN
-
-The UI should be:
-
-* Minimal
-* Fast
-* Clean
-* Desktop-first
-* File-explorer oriented
-
-Avoid:
-
-* Excessive gradients
-* Excessive animations
-* Dashboard cards everywhere
-* Marketing-heavy UI after connection
-* Unnecessary settings
-* Feature clutter
-
-The core interaction should remain obvious.
-
----
-
-# 35. DO NOT ADD THESE FEATURES
-
-For this MVP, explicitly DO NOT implement:
-
-```text
-Accounts
-Subscriptions
-Payments
-Cloud backup
-Cloud storage
-WAN
-Remote access
-Screen mirroring
-SMS
-Notifications
-Remote camera
-AI
-Social features
-iOS
-Native Windows application
-Linux application
-macOS application
-```
-
-Do not get distracted by future features.
-
----
-
-# 36. IMPLEMENTATION STRATEGY
-
-Work incrementally.
-
-After each major phase:
-
-1. Implement.
-2. Run tests.
-3. Build.
-4. Verify.
-5. Fix errors.
-6. Document.
-7. Move to the next phase.
-
-Do not generate thousands of lines of code without validating the previous layer.
-
----
-
-# 37. REQUIRED BUILD ORDER
-
-Execute this exact order:
-
-## Phase 1
-
-Repository inspection.
-
-## Phase 2
-
-LAN connection proof.
-
-## Phase 3
-
-Website QR generation.
-
-## Phase 4
-
-Android QR scanning.
-
-## Phase 5
-
-Session authentication.
-
-## Phase 6
-
-Connected state.
-
-## Phase 7
-
-Android filesystem API.
-
-## Phase 8
-
-Desktop file explorer.
-
-## Phase 9
-
-Download.
-
-## Phase 10
-
-Upload.
-
-## Phase 11
-
-Rename/delete/create folder.
-
-## Phase 12
-
-Preview.
-
-## Phase 13
-
-Transfer progress/cancellation.
-
-## Phase 14
-
-Security hardening.
-
-## Phase 15
-
-Physical-device testing.
-
-## Phase 16
-
-UI polish.
-
----
-
-# 38. IMPORTANT DEVELOPMENT BEHAVIOR
-
-When you encounter a technical blocker:
-
-Do NOT silently replace the architecture.
-
-Explain:
-
-```text
-Problem
-Why it happens
-Possible solutions
-Chosen solution
-Why it was chosen
-```
-
-Then continue implementation.
-
-If a dependency is required, justify it before adding it.
-
-Avoid dependency bloat.
-
----
-
-# 39. README
-
-Keep `README.md` updated with:
-
-```text
-What KRU is
-Architecture
-Requirements
-Installation
-Development
-Running Android
-Running Web
-Running Server
-LAN setup
-Testing
-Known limitations
-```
-
----
-
-# 40. DOCUMENTATION
+1. Website generates QR.
+2. Android scans QR.
+3. WebRTC connection establishes.
+4. DataChannel opens.
+5. Browser displays Connected.
+6. Browse Downloads.
+7. Browse Pictures.
+8. Download image.
+9. Download PDF.
+10. Download 100+ MB video.
+11. Upload image.
+12. Upload PDF.
+13. Upload 100+ MB video.
+14. Create folder.
+15. Rename file.
+16. Delete file.
+17. Cancel active transfer.
+18. Disconnect phone.
+19. Reconnect.
+20. Repeat transfer.
+
+Record actual transfer speeds.
+
+==================================================
+IMPORTANT ARCHITECTURAL RULE
+==================================================
+
+DO NOT implement:
+
+Browser
+  -> Server
+  -> Android
+  -> Server
+  -> Browser
+
+for file data.
+
+Correct:
+
+Browser
+    |
+    | WebRTC DataChannel
+    | UDP-based P2P
+    |
+Android
+
+Server:
+
+Browser <---- signaling ----> Server <---- signaling ----> Android
+
+Only signaling/session metadata goes through the server.
+
+==================================================
+DO NOT ADD
+==================================================
+
+Do not implement:
+
+- cloud storage
+- user accounts
+- PostgreSQL
+- subscriptions
+- payments
+- WAN file transfer
+- TURN server
+- file backup
+- file synchronization
+- native Windows application
+- iOS
+- screen mirroring
+- remote phone control
+- AI
+- social features
+
+==================================================
+DOCUMENTATION
+==================================================
 
 Update:
 
-```text
-docs/architecture.md
-docs/protocol.md
-```
+docs/file-transfer-architecture.md
+docs/file-transfer-protocol.md
+docs/implementation-status.md
+README.md
+
+Document:
+
+- architecture
+- signaling flow
+- WebRTC flow
+- DataChannel configuration
+- UDP transport explanation
+- protocol
+- chunk format
+- backpressure
+- integrity validation
+- filesystem security
+- transfer state machine
+- known Android limitations
+- known browser limitations
+- testing results
+
+==================================================
+IMPLEMENTATION ORDER
+==================================================
+
+Do NOT implement everything at once.
+
+Follow exactly:
+
+PHASE 1
+Repository inspection
+
+PHASE 2
+Browser <-> Android WebRTC DataChannel proof
+
+PHASE 3
+Signaling integration
+
+PHASE 4
+Hello/heartbeat protocol
+
+PHASE 5
+Android filesystem abstraction
+
+PHASE 6
+Directory browsing
+
+PHASE 7
+Download small file
+
+PHASE 8
+Binary chunk streaming + backpressure
+
+PHASE 9
+Upload small file
+
+PHASE 10
+Large-file transfer
+
+PHASE 11
+Transfer progress
+
+PHASE 12
+Cancellation
+
+PHASE 13
+Integrity verification
+
+PHASE 14
+Rename/delete/create-folder
+
+PHASE 15
+Preview
+
+PHASE 16
+Security hardening
+
+PHASE 17
+Physical LAN testing
+
+PHASE 18
+Documentation/polish
+
+After each phase:
+
+1. Run relevant tests.
+2. Build the affected application.
+3. Fix errors.
+4. Update docs/implementation-status.md.
+5. Do not proceed if the previous phase is fundamentally broken.
+
+==================================================
+CRITICAL ENGINEERING RULE
+==================================================
+
+If the browser cannot establish the desired direct LAN WebRTC connection using the current architecture:
+
+STOP.
+
+Do NOT silently switch to:
+
+- HTTP file proxy
+- WebSocket file transfer
+- server-mediated file transfer
+- cloud storage
+
+Instead document:
+
+1. What failed.
+2. Why it failed.
+3. Browser/platform restriction involved.
+4. Possible solutions.
+5. Recommended solution.
+6. Exact architectural consequences.
+
+Then wait for architectural approval.
+
+The goal is:
+
+KRU = browser-first + LAN-first + direct Android ↔ browser file transfer + UDP-based WebRTC transport.
+
+Build the smallest technically correct implementation first.

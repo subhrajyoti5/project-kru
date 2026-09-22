@@ -9,7 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_webrtc: ^1.2.0
   mobile_scanner: ^7.0.1
 
 dev_dependencies:
