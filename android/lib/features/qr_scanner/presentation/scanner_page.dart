@@ -6,6 +6,7 @@ import 'package:kru_android/features/connection/presentation/connection_page.dar
 import 'package:kru_android/features/qr_scanner/application/decode_qr.dart';
 import 'package:kru_android/features/qr_scanner/presentation/qr_camera.dart';
 import 'package:kru_android/shared/widgets/status_banner.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 /// The phone scans the QR shown by the website.
 class ScannerPage extends StatefulWidget {
@@ -27,6 +28,17 @@ class _ScannerPageState extends State<ScannerPage> {
       widget.useCamera ?? !Platform.environment.containsKey('FLUTTER_TEST');
   String? _error;
   bool _opened = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _requestPermissions();
+  }
+
+  Future<void> _requestPermissions() async {
+    await Permission.manageExternalStorage.request();
+    await Permission.storage.request();
+  }
 
   @override
   void dispose() {
