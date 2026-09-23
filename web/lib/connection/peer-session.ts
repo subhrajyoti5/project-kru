@@ -3,6 +3,7 @@
 import { markConnected } from "@/lib/api/client";
 import type { Device } from "@/types/device";
 import type { QrPayload } from "@/types/session";
+import type { FileEntry } from "@/types/filesystem";
 
 export type PeerStatus = "idle" | "connecting" | "link" | "connected" | "disconnected" | "failed";
 
@@ -11,12 +12,26 @@ export type HandshakeFrame = {
   platform: string;
 };
 
+export type TransferView = {
+  id: string;
+  name: string;
+  direction: "download" | "upload";
+  total: number;
+  transferred: number;
+  status: "transferring" | "completed" | "failed" | "cancelled";
+  error?: string;
+};
+
 export type PeerSnapshot = {
   status: PeerStatus;
   failure: string;
   device: Device | null;
   connected: boolean;
   handshake: HandshakeFrame | null;
+  path: string;
+  entries: FileEntry[];
+  transfers: TransferView[];
+  previewUrl: string;
 };
 
 type Listener = () => void;
@@ -54,13 +69,18 @@ function frameUpload(transferId: string, offset: number, payload: Uint8Array): U
 }
 
 type ChunkListener = (offset: number, payload: Uint8Array) => void;
-type Resolve = (value: Record<string, unknown>) => void;
+type ResponseValue = Record<string, unknown>;
+type Resolve = (value: ResponseValue) => void;
 
 class PeerSessionImpl {
   status: PeerStatus = "idle";
   failure = "";
   device: Device | null = null;
   handshake: HandshakeFrame | null = null;
+  path = "/";
+  entries: FileEntry[] = [];
+  transfers: TransferView[] = [];
+  previewUrl = "";
 
   private channel: WebSocket | null = null;
   private sessionId = "";
@@ -76,14 +96,23 @@ class PeerSessionImpl {
     return this.status === "connected";
   }
 
+  private _cachedSnapshot: PeerSnapshot | null = null;
+
   get snapshot(): PeerSnapshot {
-    return {
-      status: this.status,
-      failure: this.failure,
-      device: this.device,
-      connected: this.connected,
-      handshake: this.handshake,
-    };
+    if (!this._cachedSnapshot) {
+      this._cachedSnapshot = {
+        status: this.status,
+        failure: this.failure,
+        device: this.device,
+        connected: this.connected,
+        handshake: this.handshake,
+        path: this.path,
+        entries: this.entries,
+        transfers: this.transfers,
+        previewUrl: this.previewUrl,
+      };
+    }
+    return this._cachedSnapshot;
   }
 
   subscribe(listener: Listener) {
@@ -94,6 +123,7 @@ class PeerSessionImpl {
   }
 
   private emit() {
+    this._cachedSnapshot = null;
     for (const listener of this.listeners) listener();
   }
 
@@ -140,6 +170,134 @@ class PeerSessionImpl {
     return this.start(payload);
   }
 
+  async openDirectory(nextPath: string) {
+    const res = await this.request({ type: "list_directory", path: nextPath });
+    if (res.success === false) throw new Error((res.error as any)?.message || "Failed to open directory");
+    this.path = (res.path as string) ?? nextPath;
+    this.entries = (res.entries as any[]) ?? [];
+    this.previewUrl = "";
+    this.emit();
+  }
+
+  async createFolder(name: string) {
+    const res = await this.request({ type: "create_directory", path: this.path, name });
+    if (res.success === false) throw new Error((res.error as any)?.message || "Failed to create folder");
+    await this.openDirectory(this.path);
+  }
+
+  async rename(entry: FileEntry, name: string) {
+    const res = await this.request({ type: "rename", path: entry.path, name });
+    if (res.success === false) throw new Error((res.error as any)?.message || "Failed to rename");
+    await this.openDirectory(this.path);
+  }
+
+  async remove(entry: FileEntry) {
+    const res = await this.request({ type: "delete", path: entry.path });
+    if (res.success === false) throw new Error((res.error as any)?.message || "Failed to delete");
+    await this.openDirectory(this.path);
+  }
+
+  async cancel(id: string) {
+    this.sendControl({ type: "transfer_cancel", transferId: id });
+    const t = this.transfers.find(x => x.id === id);
+    if (t) {
+      t.status = "cancelled";
+      this.transfers = [...this.transfers];
+      this.emit();
+    }
+  }
+
+  async upload(parentPath: string, file: File) {
+    const res = await this.request({ type: "upload_request", path: parentPath, name: file.name, size: file.size });
+    if (res.success === false) throw new Error((res.error as any)?.message || "Failed to upload");
+    
+    const transferId = res.transferId as string;
+    const transfer: TransferView = {
+      id: transferId,
+      name: file.name,
+      direction: "upload",
+      total: file.size,
+      transferred: 0,
+      status: "transferring",
+    };
+    this.transfers = [...this.transfers, transfer];
+    this.emit();
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+        if (transfer.status !== "transferring") break;
+        const chunk = bytes.slice(offset, offset + chunkSize);
+        await this.sendUploadFrame(transferId, offset, chunk);
+        transfer.transferred += chunk.length;
+        this.transfers = [...this.transfers];
+        this.emit();
+      }
+      
+      if (transfer.status === "transferring") {
+        const completeRes = await this.request({ type: "upload_complete", transferId, requestId: crypto.randomUUID() });
+        if (completeRes.success === false) throw new Error((completeRes.error as any)?.message || "Failed to complete upload");
+        transfer.status = "completed";
+      }
+    } catch (err: any) {
+      transfer.status = "failed";
+      transfer.error = err.message;
+    }
+    this.transfers = [...this.transfers];
+    this.emit();
+    await this.openDirectory(this.path);
+  }
+
+  async download(entry: FileEntry) {
+    const res = await this.request({ type: "download_request", path: entry.path });
+    if (res.success === false) throw new Error((res.error as any)?.message || "Failed to download");
+    
+    const transferId = res.transferId as string;
+    const transfer: TransferView = {
+      id: transferId,
+      name: entry.name,
+      direction: "download",
+      total: entry.size,
+      transferred: 0,
+      status: "transferring",
+    };
+    this.transfers = [...this.transfers, transfer];
+    this.emit();
+
+    const chunks: Uint8Array[] = [];
+    const unlisten = this.onDownloadChunks(transferId, (offset, payload) => {
+      chunks.push(payload);
+      transfer.transferred += payload.length;
+      this.transfers = [...this.transfers];
+      this.emit();
+    });
+
+    try {
+      await this.awaitDownloadComplete(transferId);
+      transfer.status = "completed";
+      const blob = new Blob(chunks as BlobPart[], { type: (res.mimeType as string) || "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = entry.name;
+      a.click();
+      
+      if (entry.mimeType?.startsWith("image/")) {
+        this.previewUrl = url;
+      }
+    } catch (err: any) {
+      transfer.status = "failed";
+      transfer.error = err.message;
+    } finally {
+      unlisten();
+    }
+    
+    this.transfers = [...this.transfers];
+    this.emit();
+  }
+
   stop() {
     this.channel?.close();
     this.channel = null;
@@ -164,9 +322,9 @@ class PeerSessionImpl {
     this.channel?.send(JSON.stringify(message));
   }
 
-  request(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+  request(body: Record<string, unknown>): Promise<ResponseValue> {
     const requestId = crypto.randomUUID();
-    const response = new Promise<Resolve>((resolve) => {
+    const response = new Promise<ResponseValue>((resolve) => {
       this.responseWaiters.set(requestId, resolve);
     });
     this.sendControl({ ...body, requestId });
@@ -242,14 +400,16 @@ class PeerSessionImpl {
     }
 
     if (type === "hello") {
+      const dev = (message.device as Record<string, unknown> | undefined);
       this.handshake = {
-        protocolVersion: Number(message.protocolVersion) || 1,
-        platform: String(message.device?.platform ?? "unknown"),
-      } as HandshakeFrame;
+        protocolVersion: 1,
+        platform: String(dev?.platform ?? "unknown"),
+      };
       this.sendControl({ type: "hello_ack", protocolVersion: 1, requestId: "hello" });
       if (this.status !== "connected") {
         this.set("connected");
         void markConnected(this.sessionId, this.token).catch(() => undefined);
+        void this.openDirectory("/");
       }
       void this.refreshDevice();
       return;

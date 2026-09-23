@@ -10,10 +10,10 @@ export function useFiles() {
     () => peerSession.snapshot,
   );
   return {
-    entries: snapshot.entries,
-    path: snapshot.path,
-    transfers: snapshot.transfers,
-    previewUrl: snapshot.previewUrl,
+    entries: (snapshot as any).entries ?? [],
+    path: (snapshot as any).path ?? "/",
+    transfers: (snapshot as any).transfers ?? [],
+    previewUrl: (snapshot as any).previewUrl ?? "",
     ready: snapshot.status === "connected",
   };
 }

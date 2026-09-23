@@ -1,10 +1,8 @@
 export type FileEntry = {
-  id: string;
   name: string;
   path: string;
-  type: string;
+  type: "directory" | "file";
   size: number;
-  modifiedAt: string;
-  isDirectory: boolean;
+  modifiedAt: number;
   mimeType?: string;
 };
