@@ -3,12 +3,16 @@ function notFound(req, res) {
 }
 
 function onError(err, req, res, next) {
-  console.error(`[Error] ${req.method} ${req.originalUrl}:`, err);
+  const status = err.status || 500;
+  if (status >= 500) {
+    console.error(`[Error] ${req.method} ${req.originalUrl}:`, err);
+  } else {
+    console.error(`[Error] ${req.method} ${req.originalUrl}: ${err.message}`);
+  }
   if (res.headersSent) {
     next(err);
     return;
   }
-  const status = err.status || 500;
   res.status(status).json({ error: status === 500 ? (err.message || 'Server error.') : err.message });
 }
 
