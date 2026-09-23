@@ -15,8 +15,11 @@ export default function FilesPage() {
   const device = usePhone();
 
   const handleDisconnect = () => {
-    peerSession.stop();
-    router.push("/connect");
+    peerSession.disconnect().then(() => {
+      router.push("/connect");
+    }).catch(() => {
+      router.push("/connect");
+    });
   };
 
   const handleRefresh = () => {

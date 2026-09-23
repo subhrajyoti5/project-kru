@@ -38,6 +38,7 @@ type Listener = () => void;
 
 const chunkSize = 64 * 1024;
 const maxBuffered = 1024 * 1024;
+const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 
 function tcpUrl(payload: QrPayload): string {
   const url = new URL(payload.signalingUrl);
@@ -91,6 +92,8 @@ class PeerSessionImpl {
   private chunkListeners = new Map<string, Set<ChunkListener>>();
   private chunkBuffer = new Map<string, Array<{ offset: number; payload: Uint8Array }>>();
   private payload: QrPayload | null = null;
+  private heartbeatTimer: NodeJS.Timeout | null = null;
+  private manualDisconnect = false;
 
   get connected(): boolean {
     return this.status === "connected";
@@ -133,6 +136,28 @@ class PeerSessionImpl {
     this.emit();
   }
 
+  private startHeartbeat() {
+    this.stopHeartbeat();
+    if (this.channel?.readyState === WebSocket.OPEN) {
+      this.heartbeatTimer = setInterval(() => {
+        try {
+          if (this.channel?.readyState === WebSocket.OPEN) {
+            this.channel.send(JSON.stringify({ type: "ping" }));
+          }
+        } catch {
+          // Ignore errors
+        }
+      }, HEARTBEAT_INTERVAL);
+    }
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
   async start(payload: QrPayload) {
     if (this.channel) this.stop();
     this.payload = payload;
@@ -141,6 +166,7 @@ class PeerSessionImpl {
     this.device = null;
     this.handshake = null;
     this.chunkBuffer.clear();
+    this.manualDisconnect = false;
     this.set("connecting");
     const socket = new WebSocket(tcpUrl(payload));
     socket.binaryType = "arraybuffer";
@@ -148,6 +174,7 @@ class PeerSessionImpl {
 
     socket.onopen = () => {
       socket.send(JSON.stringify({ type: "join", role: "browser", token: payload.token }));
+      this.startHeartbeat();
     };
     socket.onmessage = (event) => {
       if (typeof event.data === "string") this.onControl(event.data);
@@ -155,9 +182,17 @@ class PeerSessionImpl {
     };
     socket.onclose = () => {
       if (this.channel !== socket) return;
-      this.channel = null;
-      this.failActive();
-      this.set("disconnected", "Connection to the phone ended.");
+      this.stopHeartbeat();
+      if (this.manualDisconnect) {
+        this.channel = null;
+        this.failActive();
+        this.set("idle", "");
+      } else {
+        // Connection lost, show disconnected state
+        this.channel = null;
+        this.failActive();
+        this.set("disconnected", "Connection to the phone ended. Waiting to reconnect...");
+      }
     };
     socket.onerror = () => {
       if (this.channel !== socket) return;
@@ -168,6 +203,23 @@ class PeerSessionImpl {
 
   reconnect(payload: QrPayload) {
     return this.start(payload);
+  }
+
+  async disconnect() {
+    this.manualDisconnect = true;
+    this.stopHeartbeat();
+    if (this.channel?.readyState === WebSocket.OPEN) {
+      this.channel.send(JSON.stringify({ type: "disconnect" }));
+    }
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
+    if (this.channel?.readyState === WebSocket.OPEN) {
+      this.channel.close();
+    }
+    this.channel = null;
+    this.failActive();
+    this.set("idle", "");
   }
 
   async openDirectory(nextPath: string) {
@@ -265,17 +317,46 @@ class PeerSessionImpl {
     this.transfers = [...this.transfers, transfer];
     this.emit();
 
-    const chunks: Uint8Array[] = [];
+    // Use a Map to store chunks by offset to handle out-of-order delivery
+    const chunkMap = new Map<number, Uint8Array>();
+    let lastProcessedOffset = 0;
+    let totalReceived = 0;
+
     const unlisten = this.onDownloadChunks(transferId, (offset, payload) => {
-      chunks.push(payload);
-      transfer.transferred += payload.length;
+      chunkMap.set(offset, payload);
+      totalReceived += payload.length;
+      transfer.transferred = totalReceived;
       this.transfers = [...this.transfers];
       this.emit();
     });
 
     try {
-      await this.awaitDownloadComplete(transferId);
+      const result = await this.awaitDownloadComplete(transferId);
       transfer.status = "completed";
+      
+      // Assemble chunks in correct order using offsets
+      const chunks: Uint8Array[] = [];
+      const expectedSize = result.actualSize;
+      let currentOffset = 0;
+      
+      while (currentOffset < expectedSize) {
+        const chunk = chunkMap.get(currentOffset);
+        if (!chunk) {
+          throw new Error(`Missing chunk at offset ${currentOffset}`);
+        }
+        chunks.push(chunk);
+        currentOffset += chunk.length;
+      }
+      
+      // Verify checksum if provided
+      if (result.sha256) {
+        const blob = new Blob(chunks as BlobPart[], { type: (res.mimeType as string) || "application/octet-stream" });
+        const calculatedHash = await this.calculateSHA256(blob);
+        if (calculatedHash !== result.sha256) {
+          throw new Error(`Checksum mismatch: expected ${result.sha256}, got ${calculatedHash}`);
+        }
+      }
+      
       const blob = new Blob(chunks as BlobPart[], { type: (res.mimeType as string) || "application/octet-stream" });
       const url = URL.createObjectURL(blob);
       
@@ -299,6 +380,8 @@ class PeerSessionImpl {
   }
 
   stop() {
+    this.manualDisconnect = true;
+    this.stopHeartbeat();
     this.channel?.close();
     this.channel = null;
     this.failActive();
@@ -394,6 +477,11 @@ class PeerSessionImpl {
     }
     const type = String(message.type ?? "");
 
+    if (type === "pong") {
+      // Heartbeat response - connection is alive
+      return;
+    }
+
     if (type === "established") {
       if (this.status !== "connected") this.set("link");
       return;
@@ -450,12 +538,21 @@ class PeerSessionImpl {
     const bytes = new Uint8Array(buffer);
     if (!magicMatch(bytes)) return;
     const idLength = bytes[5];
-    const min = 10 + idLength;
-    if (bytes.length < min + 4) return;
+    // Frame structure:
+    // [0-3]: Magic (0x4b 0x52 0x55 0x31)
+    // [4]: Version
+    // [5]: idLength
+    // [6 to 6+idLength-1]: transferId
+    // [6+idLength to 6+idLength+3]: offset (big-endian)
+    // [6+idLength+4 onwards]: payload
+    const offsetStart = 6 + idLength;
+    const payloadStart = offsetStart + 4;
+    if (bytes.length < payloadStart) return;
+    
     const transferId = new TextDecoder().decode(bytes.slice(6, 6 + idLength));
     const view = new DataView(buffer);
-    const offset = view.getUint32(6 + idLength, false);
-    const payload = bytes.slice(min + 4);
+    const offset = view.getUint32(offsetStart, false);  // false = big-endian
+    const payload = bytes.slice(payloadStart);
 
     const listeners = this.chunkListeners.get(transferId);
     if (listeners && listeners.size > 0) {
@@ -470,6 +567,13 @@ class PeerSessionImpl {
     }
     if (buffered.length > 2048) return;
     buffered.push({ offset, payload });
+  }
+
+  private async calculateSHA256(blob: Blob): Promise<string> {
+    const buffer = await blob.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 }
 

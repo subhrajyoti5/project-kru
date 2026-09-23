@@ -2,6 +2,7 @@ enum SessionStatus {
   pending,
   paired,
   connected,
+  disconnected,
   expired,
   closed;
 

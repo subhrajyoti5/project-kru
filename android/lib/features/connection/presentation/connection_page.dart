@@ -57,7 +57,9 @@ class _ConnectionPageState extends State<ConnectionPage> {
   @override
   void dispose() {
     _subscription?.cancel();
-    _controller.close();
+    // Don't close the persistent connection when widget is disposed.
+    // The connection remains active for background transfer and operations.
+    // Only dispose the owned client if this page created it.
     _ownedClient?.close();
     super.dispose();
   }

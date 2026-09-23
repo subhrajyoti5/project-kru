@@ -44,6 +44,14 @@ function attachTcp(httpServer, udpPort) {
           join(ws, message, udpPort, peers);
           return;
         }
+        if (message.type === 'disconnect') {
+          ws.close(1000, 'User initiated disconnect');
+          return;
+        }
+        if (message.type === 'ping') {
+          ws.send(JSON.stringify({ type: 'pong' }));
+          return;
+        }
       }
       const room = peers.get(ws.sessionId);
       if (!room || (ws !== room.browser && ws !== room.android)) return;
