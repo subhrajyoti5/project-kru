@@ -166,8 +166,8 @@ class PeerSessionImpl {
 
   request(body: Record<string, unknown>): Promise<Record<string, unknown>> {
     const requestId = crypto.randomUUID();
-    const response = new Promise<Resolve>((resolve) => {
-      this.responseWaiters.set(requestId, resolve);
+    const response = new Promise<Record<string, unknown>>((resolve) => {
+      this.responseWaiters.set(requestId, resolve as Resolve);
     });
     this.sendControl({ ...body, requestId });
     return response;
@@ -244,7 +244,7 @@ class PeerSessionImpl {
     if (type === "hello") {
       this.handshake = {
         protocolVersion: Number(message.protocolVersion) || 1,
-        platform: String(message.device?.platform ?? "unknown"),
+        platform: String((message.device as Record<string, unknown> | undefined)?.platform ?? "unknown"),
       } as HandshakeFrame;
       this.sendControl({ type: "hello_ack", protocolVersion: 1, requestId: "hello" });
       if (this.status !== "connected") {

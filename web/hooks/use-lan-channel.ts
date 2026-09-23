@@ -15,8 +15,11 @@ export function useLanChannel(payload: QrPayload | null) {
     else if (peerSession.status === "failed") {
       setPhase("failed");
       setFailure(peerSession.failure);
-    } else if (peerSession.status === "connecting") setPhase("connecting");
-    else if (peerSession.status === "disconnected") setPhase("failed");
+    } else if (peerSession.status === "connecting") {
+      setFailure(null);
+      setPhase("connecting");
+    } else if (peerSession.status === "disconnected") setPhase("failed");
+    else if (peerSession.status === "idle") setPhase("idle");
   }), []);
 
   useEffect(() => {
