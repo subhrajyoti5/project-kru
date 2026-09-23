@@ -180,7 +180,7 @@ class PeerSessionImpl {
         resolve();
         return;
       }
-      frameUpload(transferId, offset, payload);
+      channel.send(frameUpload(transferId, offset, payload));
       const drain = () => {
         if (channel.bufferedAmount > maxBuffered) {
           channel.addEventListener("bufferedamountlow", drain, { once: true });

@@ -34,7 +34,7 @@ export default function ConnectPage() {
             The website shows a QR code. The Android app scans it.
           </p>
         </div>
-        <ConnectionStatus status={status} />
+        <ConnectionStatus status={isFailure ? "expired" : status} />
       </header>
       {error ? <p className="text-red-800">{error}</p> : null}
       {isFailure ? (
@@ -47,6 +47,10 @@ export default function ConnectPage() {
             type="button"
             className="mt-3 rounded-full bg-red-800 px-4 py-2 text-sm text-white"
             onClick={() => {
+              if (status === "expired" || status === "closed") {
+                window.location.reload();
+                return;
+              }
               if (qrPayload) {
                 peerSession.start(qrPayload).catch(() => undefined);
               }

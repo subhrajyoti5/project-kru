@@ -10,8 +10,7 @@ export function connectionLabel(status: SessionStatus | "idle"): string {
     case "connected":
       return "Connected";
     case "expired":
-      return "QR expired";
     case "closed":
-      return "Disconnected";
+      return "Unable to connect";
   }
 }
