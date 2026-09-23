@@ -20,6 +20,11 @@ enum ConnectionEvent {
 }
 
 class PersistentConnectionService {
+  PersistentConnectionService._internal();
+  static final PersistentConnectionService _instance = PersistentConnectionService._internal();
+  static PersistentConnectionService get instance => _instance;
+  factory PersistentConnectionService() => _instance;
+
   WebSocket? _socket;
   DataProtocol? _protocol;
   QrPayload? _payload;
@@ -43,7 +48,12 @@ class PersistentConnectionService {
   Future<void> connect(QrPayload payload) async {
     if (_disposed) throw AppException('Service is disposed', code: 'disposed');
     if (_socket != null && _socket!.readyState == WebSocket.open) {
-      throw AppException('Already connected', code: 'already_connected');
+      if (_payload?.sessionId == payload.sessionId) {
+        // Already connected to this session
+        return;
+      }
+      // Connected to another session, disconnect first
+      await disconnect();
     }
 
     _payload = payload;

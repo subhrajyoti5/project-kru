@@ -49,12 +49,18 @@ class DataProtocol {
           await _send({
             'type': 'directory_response',
             'requestId': requestId,
+            'success': true,
             'path': decoded['path'] ?? '/',
             'entries': entries.map((entry) => entry.toJson()).toList(),
           });
         case 'stat':
           final entry = await _files.stat('${decoded['path']}');
-          await _send({'type': 'stat_response', 'requestId': requestId, 'entry': entry.toJson()});
+          await _send({
+            'type': 'stat_response',
+            'requestId': requestId,
+            'success': true,
+            'entry': entry.toJson(),
+          });
         case 'create_directory':
           await _files.createDirectory('${decoded['path'] ?? '/'}', '${decoded['name']}');
           await _ok(requestId);

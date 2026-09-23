@@ -1,4 +1,22 @@
+const fs = require('fs');
+const path = require('path');
 const os = require('os');
+
+// Load .env file if present
+const envPath = path.resolve(__dirname, '../../.env');
+if (fs.existsSync(envPath)) {
+  const content = fs.readFileSync(envPath, 'utf8');
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const idx = trimmed.indexOf('=');
+    if (idx !== -1) {
+      const key = trimmed.slice(0, idx).trim();
+      const val = trimmed.slice(idx + 1).trim();
+      if (!process.env[key]) process.env[key] = val;
+    }
+  }
+}
 
 const port = Number(process.env.PORT) || 4000;
 
@@ -32,6 +50,6 @@ function publicSignalingUrl() {
 
 module.exports = {
   port,
-  sessionTtlMs: Number(process.env.SESSION_TTL_MS) || 5 * 60 * 1000,
+  sessionTtlMs: Number(process.env.SESSION_TTL_MS) || 60 * 60 * 1000,
   publicSignalingUrl: publicSignalingUrl(),
 };

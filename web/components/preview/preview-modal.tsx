@@ -44,6 +44,32 @@ export function PreviewModal({ url, filename, onClose, onDownload }: PreviewModa
   const [previewType, setPreviewType] = useState<PreviewType>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
+  // Prevent default browser scroll when modal is open
+  useEffect(() => {
+    if (url) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "auto";
+      };
+    }
+  }, [url]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!url) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [url, onClose]);
+
   useEffect(() => {
     if (!url) return;
 

@@ -23,7 +23,13 @@ export default function FilesPage() {
   };
 
   const handleRefresh = () => {
-    peerSession.openDirectory(files.path || "/");
+    peerSession.openDirectory(files.path || "/").catch(() => {});
+  };
+
+  // Navigate back WITHOUT disconnecting
+  const handleNavigateBack = () => {
+    router.push("/connect");
+    // Connection stays active in background
   };
 
   return (
@@ -31,9 +37,11 @@ export default function FilesPage() {
       {/* Top Navigation Bar */}
       <nav className="flex items-center justify-between border-b border-stone-200 pb-4">
         <div className="flex items-center gap-3">
-          <Link
-            href="/connect"
+          <button
+            type="button"
+            onClick={handleNavigateBack}
             className="group flex items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 shadow-xs transition hover:bg-stone-50 hover:text-stone-900"
+            title="Go back to connect page (connection stays active)"
           >
             <svg
               className="h-4 w-4 transition-transform group-hover:-translate-x-0.5"
@@ -44,7 +52,7 @@ export default function FilesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
             </svg>
             <span>Back to Connect</span>
-          </Link>
+          </button>
           <span className="text-stone-300">|</span>
           <span className="text-sm font-semibold tracking-wide text-stone-800">Kru Files</span>
         </div>

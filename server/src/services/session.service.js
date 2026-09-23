@@ -122,6 +122,8 @@ function setDeviceAddress(sessionId, address) {
 function heartbeat(sessionId, token, now = Date.now()) {
   const session = requireSession(sessionId, token, now);
   session.lastSeenAt = new Date(now).toISOString();
+  session.expiresAtMs = now + config.sessionTtlMs;
+  session.expiresAt = new Date(session.expiresAtMs).toISOString();
   return session;
 }
 
@@ -139,6 +141,8 @@ function markConnected(sessionId, token, now = Date.now()) {
     throw error;
   }
   session.status = 'connected';
+  session.expiresAtMs = now + config.sessionTtlMs;
+  session.expiresAt = new Date(session.expiresAtMs).toISOString();
   return session;
 }
 

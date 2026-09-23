@@ -226,12 +226,23 @@ class PeerSessionImpl {
   }
 
   async openDirectory(nextPath: string) {
-    const res = await this.request({ type: "list_directory", path: nextPath });
-    if (res.success === false) throw new Error((res.error as any)?.message || "Failed to open directory");
-    this.path = (res.path as string) ?? nextPath;
-    this.entries = (res.entries as any[]) ?? [];
-    this.previewUrl = "";
-    this.emit();
+    if (!this.channel || this.channel.readyState !== WebSocket.OPEN) {
+      // If socket is not open, do not throw unhandled exception to UI
+      return;
+    }
+    try {
+      const res = await this.request({ type: "list_directory", path: nextPath });
+      if (res.success === false) {
+        console.warn("list_directory unsuccessful:", res.error);
+        return;
+      }
+      this.path = (res.path as string) ?? nextPath;
+      this.entries = (res.entries as any[]) ?? [];
+      this.previewUrl = "";
+      this.emit();
+    } catch (err) {
+      console.warn("openDirectory failed:", err);
+    }
   }
 
   async createFolder(name: string) {
