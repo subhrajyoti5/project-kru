@@ -26,99 +26,122 @@ export default function FilesPage() {
     peerSession.openDirectory(files.path || "/").catch(() => {});
   };
 
-  // Navigate back WITHOUT disconnecting
   const handleNavigateBack = () => {
     router.push("/connect");
-    // Connection stays active in background
   };
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-8">
-      {/* Top Navigation Bar */}
-      <nav className="flex items-center justify-between border-b border-stone-200 pb-4">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleNavigateBack}
-            className="group flex items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 shadow-xs transition hover:bg-stone-50 hover:text-stone-900"
-            title="Go back to connect page (connection stays active)"
-          >
-            <svg
-              className="h-4 w-4 transition-transform group-hover:-translate-x-0.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+    <main className="min-h-screen bg-apple-canvas">
+      {/* Global Nav */}
+      <nav className="fixed top-0 left-0 right-0 bg-apple-black border-b border-apple-hairline z-50">
+        <div className="max-w-6xl mx-auto px-lg flex items-center justify-between h-11">
+          <span className="text-nav-link font-sf-text font-normal text-apple-body-on-dark">
+            Kru Files
+          </span>
+          <div className="flex items-center gap-md">
+            <button
+              type="button"
+              onClick={handleRefresh}
+              title="Refresh directory"
+              className="text-nav-link font-sf-text font-normal text-apple-body-on-dark hover:text-apple-body-muted transition-colors px-sm py-xs"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            <span>Back to Connect</span>
-          </button>
-          <span className="text-stone-300">|</span>
-          <span className="text-sm font-semibold tracking-wide text-stone-800">Kru Files</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            title="Refresh directory"
-            className="flex items-center gap-1.5 rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 shadow-xs transition hover:bg-stone-50 hover:text-stone-900"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-            <span>Refresh</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleDisconnect}
-            title="Disconnect session"
-            className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-100"
-          >
-            Disconnect
-          </button>
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
+            <ConnectionStatus status={device?.connectionStatus ?? "idle"} />
+          </div>
         </div>
       </nav>
 
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-stone-900">{device?.name ?? "Android phone"}</h1>
-          <p className="text-sm text-stone-600">
-            {[device?.manufacturer, device?.model].filter(Boolean).join(" ")}
-          </p>
-        </div>
-        <ConnectionStatus status={device?.connectionStatus ?? "idle"} />
-      </header>
+      {/* Main Content */}
+      <div className="pt-11">
+        {/* Header Section */}
+        <section className="bg-apple-parchment px-lg py-section border-b border-apple-hairline">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-lg">
+              <div>
+                <h1 className="text-display-lg font-sf-display font-semibold text-apple-ink mb-sm">
+                  {device?.name ?? "Android phone"}
+                </h1>
+                <p className="text-body font-sf-text font-normal text-apple-ink-muted-80">
+                  {[device?.manufacturer, device?.model].filter(Boolean).join(" ")} • Files on local network
+                </p>
+              </div>
+              <div className="flex items-center gap-md">
+                <button
+                  type="button"
+                  onClick={handleNavigateBack}
+                  className="rounded-pill border-2 border-apple-primary text-apple-primary font-sf-text font-normal px-lg py-md hover:bg-apple-divider transition-all active:scale-95"
+                >
+                  Back to Connect
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDisconnect}
+                  className="rounded-pill bg-red-600 text-white font-sf-text font-normal px-lg py-md hover:bg-red-700 transition-all active:scale-95"
+                >
+                  Disconnect
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <DeviceCard device={device} />
+        {/* Connection Status Alert */}
+        {files.ready ? (
+          <section className="bg-green-50 border-b border-green-200 px-lg py-md">
+            <div className="max-w-6xl mx-auto flex items-start gap-md">
+              <svg className="h-5 w-5 text-green-600 flex-shrink-0 mt-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <div>
+                <p className="text-body font-sf-text font-normal text-green-900">
+                  Connected. Files move securely over the LAN data channel, directly between devices.
+                </p>
+              </div>
+            </div>
+          </section>
+        ) : (
+          <section className="bg-amber-50 border-b border-amber-200 px-lg py-md">
+            <div className="max-w-6xl mx-auto flex items-center justify-between">
+              <p className="text-body font-sf-text font-normal text-amber-900">
+                Not connected to phone session yet.
+              </p>
+              <Link 
+                href="/connect" 
+                className="text-apple-primary font-sf-text font-normal hover:text-apple-primary-focus transition-colors"
+              >
+                Connect from QR page &rarr;
+              </Link>
+            </div>
+          </section>
+        )}
 
-      {files.ready ? (
-        <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3.5 py-2 text-sm text-emerald-800">
-          <svg className="h-4 w-4 shrink-0 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-          </svg>
-          <span>Connected. Files move securely over the LAN data channel, directly between devices.</span>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between rounded-lg bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900 border border-amber-200">
-          <span>Not connected to phone session yet.</span>
-          <Link href="/connect" className="font-medium underline hover:text-amber-950">
-            Connect from QR page &rarr;
-          </Link>
-        </div>
-      )}
+        {/* Device Card */}
+        <section className="bg-apple-parchment px-lg py-lg border-b border-apple-hairline">
+          <div className="max-w-6xl mx-auto">
+            <DeviceCard device={device} />
+          </div>
+        </section>
 
-      <FileManager
-        entries={files.entries}
-        path={files.path}
-        transfers={files.transfers}
-        previewUrl={files.previewUrl}
-      />
+        {/* File Manager */}
+        <section className="px-lg py-section">
+          <div className="max-w-6xl mx-auto">
+            <FileManager
+              entries={files.entries}
+              path={files.path}
+              transfers={files.transfers}
+              previewUrl={files.previewUrl}
+            />
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

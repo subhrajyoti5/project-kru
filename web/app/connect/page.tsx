@@ -26,53 +26,129 @@ export default function ConnectPage() {
   }, [status, router]);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-6 py-8">
-      <nav className="flex items-center justify-between border-b border-stone-200 pb-4">
-        <Link
-          href="/"
-          className="group flex items-center gap-2 text-sm font-medium text-stone-600 transition hover:text-stone-900"
-        >
-          <svg
-            className="h-4 w-4 transition-transform group-hover:-translate-x-0.5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Home</span>
-        </Link>
-        {status === "connected" && (
+    <main className="min-h-screen bg-apple-canvas">
+      {/* Global Nav */}
+      <nav className="fixed top-0 left-0 right-0 bg-apple-black border-b border-apple-hairline z-50">
+        <div className="max-w-6xl mx-auto px-lg flex items-center justify-between h-11">
           <Link
-            href="/files"
-            className="rounded-lg bg-stone-900 px-3.5 py-1.5 text-sm font-medium text-white shadow-xs transition hover:bg-stone-800"
+            href="/"
+            className="text-nav-link font-sf-text font-normal text-apple-body-on-dark hover:text-apple-body-muted transition-colors"
           >
-            Go to Files &rarr;
+            Kru
           </Link>
-        )}
+          <ConnectionStatus status={status} />
+        </div>
       </nav>
 
-      <header className="flex items-start justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-semibold">Connect your phone</h1>
-          <p className="mt-2 max-w-md text-stone-700">
-            Open the Android app and scan this code. The website creates the code. The phone does not.
-          </p>
-        </div>
-        <ConnectionStatus status={status} />
-      </header>
-      {error ? <p className="text-red-800">{error}</p> : null}
-      {lan.failure ? <p className="max-w-md text-red-800">{lan.failure}</p> : null}
-      <div className="flex flex-wrap items-start gap-8">
-        <QrDisplay payload={qrPayload} />
-        <div className="flex flex-col gap-3">
-          <SessionStatusText status={status} />
-          <DeviceCard device={connection.device} />
-          <p className="max-w-sm text-sm text-stone-600">
-            Use the same home Wi-Fi, or join this phone&apos;s hotspot from the laptop. College and
-            enterprise Wi-Fi is refused because those firewalls block the connection.
-          </p>
-        </div>
+      {/* Main Content */}
+      <div className="pt-11">
+        {/* Hero Section */}
+        <section className="bg-apple-parchment px-lg py-section border-b border-apple-hairline">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex flex-col md:flex-row gap-xl items-start">
+              {/* Left: QR Code */}
+              <div className="flex-1 flex flex-col items-center">
+                <h1 className="text-display-lg font-sf-display font-semibold text-apple-ink mb-md text-center">
+                  Scan to connect
+                </h1>
+                <p
+                  className="text-body font-sf-text font-normal text-apple-ink-muted-80 text-center mb-xl"
+                  style={{ maxWidth: "448px" }}
+                >
+                  Open the Kru Android app and scan this QR code from your phone.
+                </p>
+                <div className="bg-apple-canvas rounded-lg p-lg shadow-sm border border-apple-hairline">
+                  <QrDisplay payload={qrPayload} />
+                </div>
+              </div>
+
+              {/* Right: Connection Status & Info */}
+              <div className="flex-1 flex flex-col gap-lg">
+                {/* Status Card */}
+                <div className="bg-apple-canvas rounded-lg p-lg border border-apple-hairline shadow-sm">
+                  <h2 className="text-tagline font-sf-display font-semibold text-apple-ink mb-md">
+                    Connection Status
+                  </h2>
+                  <SessionStatusText status={status} />
+                </div>
+
+                {/* Device Card */}
+                {connection.device && (
+                  <div className="bg-apple-canvas rounded-lg p-lg border border-apple-hairline shadow-sm">
+                    <h2 className="text-tagline font-sf-display font-semibold text-apple-ink mb-md">
+                      Your Device
+                    </h2>
+                    <DeviceCard device={connection.device} />
+                  </div>
+                )}
+
+                {/* Instructions */}
+                <div className="bg-apple-pearl rounded-lg p-lg">
+                  <h3 className="text-body-strong font-sf-text font-semibold text-apple-ink mb-sm">
+                    Requirements
+                  </h3>
+                  <ul className="text-body font-sf-text font-normal text-apple-ink-muted-80 space-y-sm">
+                    <li className="flex gap-sm">
+                      <span className="text-apple-primary">✓</span>
+                      <span>Same Wi-Fi network or phone hotspot</span>
+                    </li>
+                    <li className="flex gap-sm">
+                      <span className="text-apple-primary">✓</span>
+                      <span>Android app installed on phone</span>
+                    </li>
+                    <li className="flex gap-sm">
+                      <span className="text-apple-primary">✓</span>
+                      <span>Firewall must allow LAN connections</span>
+                    </li>
+                  </ul>
+                  <p className="text-caption font-sf-text font-normal text-apple-ink-muted-48 mt-md">
+                    College and enterprise Wi-Fi is often blocked due to firewall restrictions.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Error Messages */}
+        {error && (
+          <section className="bg-red-50 border-b border-red-200 px-lg py-md">
+            <div className="max-w-4xl mx-auto">
+              <p className="text-body font-sf-text font-normal text-red-900">{error}</p>
+            </div>
+          </section>
+        )}
+
+        {lan.failure && (
+          <section className="bg-red-50 border-b border-red-200 px-lg py-md">
+            <div className="max-w-4xl mx-auto">
+              <p className="text-body font-sf-text font-normal text-red-900">{lan.failure}</p>
+            </div>
+          </section>
+        )}
+
+        {/* CTA Section */}
+        <section className="bg-apple-parchment px-lg py-section border-t border-apple-hairline">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-display-md font-sf-display font-semibold text-apple-ink mb-md">
+              Ready to browse your phone?
+            </h2>
+            <p className="text-lead font-sf-text font-normal text-apple-ink-muted-80 mb-xl">
+              Your files are waiting. No uploads, no delays, just local access.
+            </p>
+            {status === "connected" && (
+              <Link
+                href="/files"
+                className="inline-flex items-center justify-center rounded-pill bg-apple-primary text-white font-sf-text font-normal px-5xl py-md hover:bg-apple-primary-focus transition-all active:scale-95"
+              >
+                Go to Files &rarr;
+              </Link>
+            )}
+            <p className="text-caption font-sf-text font-normal text-apple-ink-muted-48 mt-lg">
+              Once connected, you can browse your phone's file system from this browser.
+            </p>
+          </div>
+        </section>
       </div>
     </main>
   );

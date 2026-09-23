@@ -177,7 +177,7 @@ export function PreviewModal({ url, filename, onClose, onDownload }: PreviewModa
                   <path d="M12 3v9.28c-.47-.46-1.12-.75-1.84-.75-1.66 0-3 1.34-3 3s1.34 3 3 3c1.66 0 3-1.34 3-3V7h4V3h-4z" />
                 </svg>
               </div>
-              <audio controls className="w-full max-w-sm">
+              <audio controls className="w-full" style={{ maxWidth: "384px" }}>
                 <source src={url} />
                 Your browser does not support the audio element.
               </audio>

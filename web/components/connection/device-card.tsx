@@ -22,7 +22,10 @@ function rows(device: Device): Array<[string, string]> {
 export function DeviceCard({ device }: { device: Device | null }) {
   if (!device) return null;
   return (
-    <section className="w-full max-w-sm rounded-2xl border border-stone-300 bg-white px-4 py-4">
+    <section
+      className="w-full rounded-2xl border border-stone-300 bg-white p-4 shadow-sm"
+      style={{ maxWidth: "384px" }}
+    >
       <p className="text-xs uppercase tracking-wide text-stone-500">Phone</p>
       <h2 className="mt-1 text-xl font-semibold">{device.name}</h2>
       <dl className="mt-3 grid grid-cols-[7rem_1fr] gap-y-1 text-sm">

@@ -82,76 +82,55 @@ class _ScannerPageState extends State<ScannerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF272729),
       body: SafeArea(
         child: Column(
           children: [
+            // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF18181B),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFF27272A)),
-                    ),
-                    child: const Icon(
-                      Icons.qr_code_scanner_rounded,
-                      size: 20,
-                      color: Color(0xFF10B981),
-                    ),
+                  Text(
+                    'Kru',
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.374,
+                          color: const Color(0xFFffffff),
+                        ),
                   ),
-                  const SizedBox(width: 14),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'KRU LINK',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.5,
-                          color: Colors.white.withValues(alpha: 0.5),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Scan the QR code from your desktop browser',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: -0.374,
+                          color: const Color(0xFFcccccc),
                         ),
-                      ),
-                      const Text(
-                        'Scan Web Code',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.4,
-                          color: Color(0xFFF4F4F5),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 24),
+
+            // QR Camera Container
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Center(
                   child: AspectRatio(
                     aspectRatio: 1.0,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFF18181B),
-                        borderRadius: BorderRadius.circular(28),
+                        color: const Color(0xFF2a2a2c),
+                        borderRadius: BorderRadius.circular(18),
                         border: Border.all(
-                          color: const Color(0xFF27272A),
-                          width: 1.5,
+                          color: const Color(0xFF333333),
+                          width: 1,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.4),
-                            blurRadius: 30,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: Stack(
@@ -164,12 +143,12 @@ class _ScannerPageState extends State<ScannerPage> {
                               child: Text(
                                 'Camera inactive in test',
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.4),
-                                  fontSize: 13,
+                                  color: Colors.white.withOpacity(0.4),
+                                  fontSize: 14,
                                 ),
                               ),
                             ),
-                          // Premium minimalist corner focus brackets
+                          // Apple-style minimalist corner focus brackets
                           IgnorePointer(
                             child: Padding(
                               padding: const EdgeInsets.all(24),
@@ -178,17 +157,17 @@ class _ScannerPageState extends State<ScannerPage> {
                                   Align(
                                     alignment: Alignment.topLeft,
                                     child: Container(
-                                      width: 28,
-                                      height: 28,
+                                      width: 32,
+                                      height: 32,
                                       decoration: const BoxDecoration(
                                         border: Border(
                                           top: BorderSide(
-                                            color: Color(0xFF10B981),
-                                            width: 3.5,
+                                            color: Color(0xFF0066cc),
+                                            width: 2.5,
                                           ),
                                           left: BorderSide(
-                                            color: Color(0xFF10B981),
-                                            width: 3.5,
+                                            color: Color(0xFF0066cc),
+                                            width: 2.5,
                                           ),
                                         ),
                                       ),
@@ -197,17 +176,17 @@ class _ScannerPageState extends State<ScannerPage> {
                                   Align(
                                     alignment: Alignment.topRight,
                                     child: Container(
-                                      width: 28,
-                                      height: 28,
+                                      width: 32,
+                                      height: 32,
                                       decoration: const BoxDecoration(
                                         border: Border(
                                           top: BorderSide(
-                                            color: Color(0xFF10B981),
-                                            width: 3.5,
+                                            color: Color(0xFF0066cc),
+                                            width: 2.5,
                                           ),
                                           right: BorderSide(
-                                            color: Color(0xFF10B981),
-                                            width: 3.5,
+                                            color: Color(0xFF0066cc),
+                                            width: 2.5,
                                           ),
                                         ),
                                       ),
@@ -216,17 +195,17 @@ class _ScannerPageState extends State<ScannerPage> {
                                   Align(
                                     alignment: Alignment.bottomLeft,
                                     child: Container(
-                                      width: 28,
-                                      height: 28,
+                                      width: 32,
+                                      height: 32,
                                       decoration: const BoxDecoration(
                                         border: Border(
                                           bottom: BorderSide(
-                                            color: Color(0xFF10B981),
-                                            width: 3.5,
+                                            color: Color(0xFF0066cc),
+                                            width: 2.5,
                                           ),
                                           left: BorderSide(
-                                            color: Color(0xFF10B981),
-                                            width: 3.5,
+                                            color: Color(0xFF0066cc),
+                                            width: 2.5,
                                           ),
                                         ),
                                       ),
@@ -235,17 +214,17 @@ class _ScannerPageState extends State<ScannerPage> {
                                   Align(
                                     alignment: Alignment.bottomRight,
                                     child: Container(
-                                      width: 28,
-                                      height: 28,
+                                      width: 32,
+                                      height: 32,
                                       decoration: const BoxDecoration(
                                         border: Border(
                                           bottom: BorderSide(
-                                            color: Color(0xFF10B981),
-                                            width: 3.5,
+                                            color: Color(0xFF0066cc),
+                                            width: 2.5,
                                           ),
                                           right: BorderSide(
-                                            color: Color(0xFF10B981),
-                                            width: 3.5,
+                                            color: Color(0xFF0066cc),
+                                            width: 2.5,
                                           ),
                                         ),
                                       ),
@@ -262,45 +241,48 @@ class _ScannerPageState extends State<ScannerPage> {
                 ),
               ),
             ),
+
+            // Instructions and Error
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
               child: Column(
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 14,
-                    ),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF18181B),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF27272A)),
+                      color: const Color(0xFF2a2a2c),
+                      borderRadius: BorderRadius.circular(11),
+                      border: Border.all(
+                        color: const Color(0xFF333333),
+                        width: 0.5,
+                      ),
                     ),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          width: 24,
+                          height: 24,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withValues(
-                              alpha: 0.12,
-                            ),
-                            shape: BoxShape.circle,
+                            color: const Color(0xFF0066cc).withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(
-                            Icons.wifi_tethering_rounded,
-                            size: 18,
-                            color: Color(0xFF10B981),
+                            Icons.info_outline,
+                            size: 14,
+                            color: Color(0xFF2997ff),
                           ),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Point camera at the QR code on your desktop browser. Direct Wi-Fi sync will start.',
+                            'Make sure your phone and desktop are on the same Wi-Fi network. Position the camera to capture the QR code.',
                             style: TextStyle(
-                              fontSize: 13,
-                              height: 1.4,
-                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 14,
+                              height: 1.43,
+                              letterSpacing: -0.224,
+                              color: const Color(0xFFcccccc),
                             ),
                           ),
                         ),
@@ -308,7 +290,7 @@ class _ScannerPageState extends State<ScannerPage> {
                     ),
                   ),
                   if (_error != null) ...[
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
                     StatusBanner(message: _error!, error: true),
                   ],
                 ],
