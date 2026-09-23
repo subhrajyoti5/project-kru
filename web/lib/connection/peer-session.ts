@@ -32,6 +32,7 @@ export type PeerSnapshot = {
   entries: FileEntry[];
   transfers: TransferView[];
   previewUrl: string;
+  previewFile: { url: string; filename: string } | null;
 };
 
 type Listener = () => void;
@@ -82,6 +83,7 @@ class PeerSessionImpl {
   entries: FileEntry[] = [];
   transfers: TransferView[] = [];
   previewUrl = "";
+  previewFile: { url: string; filename: string } | null = null;
 
   private channel: WebSocket | null = null;
   private sessionId = "";
@@ -113,6 +115,7 @@ class PeerSessionImpl {
         entries: this.entries,
         transfers: this.transfers,
         previewUrl: this.previewUrl,
+        previewFile: this.previewFile,
       };
     }
     return this._cachedSnapshot;
@@ -360,14 +363,9 @@ class PeerSessionImpl {
       const blob = new Blob(chunks as BlobPart[], { type: (res.mimeType as string) || "application/octet-stream" });
       const url = URL.createObjectURL(blob);
       
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = entry.name;
-      a.click();
-      
-      if (entry.mimeType?.startsWith("image/")) {
-        this.previewUrl = url;
-      }
+      // Store preview file instead of auto-downloading
+      this.previewFile = { url, filename: entry.name };
+      this.emit();
     } catch (err: any) {
       transfer.status = "failed";
       transfer.error = err.message;
@@ -376,6 +374,23 @@ class PeerSessionImpl {
     }
     
     this.transfers = [...this.transfers];
+    this.emit();
+  }
+
+  downloadPreview() {
+    if (!this.previewFile) return;
+    
+    const a = document.createElement("a");
+    a.href = this.previewFile.url;
+    a.download = this.previewFile.filename;
+    a.click();
+  }
+
+  closePreview() {
+    if (this.previewFile?.url) {
+      URL.revokeObjectURL(this.previewFile.url);
+    }
+    this.previewFile = null;
     this.emit();
   }
 

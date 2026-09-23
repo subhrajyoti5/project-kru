@@ -3,6 +3,7 @@
 import { Breadcrumb } from "./breadcrumb";
 import { FileList } from "./file-list";
 import { Sidebar } from "./sidebar";
+import { PreviewModal } from "@/components/preview/preview-modal";
 import { peerSession } from "@/lib/connection/peer-session";
 import type { FileEntry } from "@/types/filesystem";
 import type { TransferView } from "@/lib/connection/peer-session";
@@ -93,7 +94,15 @@ export function FileManager({
           />
         </div>
       </div>
-      {previewUrl ? <img src={previewUrl} alt="" className="max-h-80 rounded-xl" /> : null}
+
+      {/* Preview Modal */}
+      <PreviewModal
+        url={peerSession.snapshot.previewFile?.url || null}
+        filename={peerSession.snapshot.previewFile?.filename || ""}
+        onClose={() => peerSession.closePreview()}
+        onDownload={() => peerSession.downloadPreview()}
+      />
+
       <section className="rounded-2xl border border-stone-300 bg-white p-4">
         <h2 className="font-medium">Transfers</h2>
         {transfers.length === 0 ? <p className="mt-2 text-sm text-stone-600">No transfers yet.</p> : null}
