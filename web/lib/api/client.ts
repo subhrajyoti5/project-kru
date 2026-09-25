@@ -1,6 +1,6 @@
 import type { CreatedSession, Session } from "@/types/session";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "https://api.kru.subhr.in";
 
 async function readError(response: Response): Promise<string> {
   try {
