@@ -13,6 +13,7 @@ class KruApp extends StatelessWidget {
       theme: buildAppTheme(),
       initialRoute: AppRoutes.scanner,
       onGenerateRoute: buildRoute,
+      debugShowCheckedModeBanner: false,
     );
   }
 }

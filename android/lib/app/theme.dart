@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
 ThemeData buildAppTheme() {
-  // Apple Design System Colors
+  // Apple Design System Colors - Enhanced for accessibility
   const primaryBlue = Color(0xFF0066cc);       // Action Blue
   const primaryBlueFocus = Color(0xFF0071e3); // Focus Blue
   const canvasWhite = Color(0xFFffffff);      // White
   const parchmentLight = Color(0xFFf5f5f7);   // Parchment
-  const appleInk = Color(0xFF1d1d1f);         // Ink
   const darkTile1 = Color(0xFF272729);        // Near-Black Tile 1
   const darkTile2 = Color(0xFF2a2a2c);        // Near-Black Tile 2
   const appleBlack = Color(0xFF000000);       // Pure Black
   const bodyOnDark = Color(0xFFffffff);       // Body on Dark
   const bodyMuted = Color(0xFFcccccc);        // Body Muted
   const inkMuted = Color(0xFF7a7a7a);         // Ink Muted
+  const errorRed = Color(0xFFFF3B30);         // Error Red
 
   return ThemeData(
     useMaterial3: true,
@@ -30,6 +30,7 @@ ThemeData buildAppTheme() {
       onPrimary: canvasWhite,
       background: darkTile1,
       onBackground: bodyOnDark,
+      error: errorRed,
     ),
     appBarTheme: const AppBarTheme(
       backgroundColor: appleBlack,
@@ -62,7 +63,7 @@ ThemeData buildAppTheme() {
         fontWeight: FontWeight.w600,
         letterSpacing: -0.28,
         height: 1.07,
-        color: appleInk,
+        color: bodyOnDark,
       ),
       // Display Large
       displayMedium: TextStyle(
@@ -70,7 +71,7 @@ ThemeData buildAppTheme() {
         fontWeight: FontWeight.w600,
         letterSpacing: 0,
         height: 1.1,
-        color: appleInk,
+        color: bodyOnDark,
       ),
       // Display Medium
       displaySmall: TextStyle(
@@ -78,7 +79,7 @@ ThemeData buildAppTheme() {
         fontWeight: FontWeight.w600,
         letterSpacing: -0.374,
         height: 1.47,
-        color: appleInk,
+        color: bodyOnDark,
       ),
       // Headline = Tagline
       headlineMedium: TextStyle(
@@ -86,7 +87,7 @@ ThemeData buildAppTheme() {
         fontWeight: FontWeight.w600,
         letterSpacing: 0.231,
         height: 1.19,
-        color: appleInk,
+        color: bodyOnDark,
       ),
       // Title = Body Strong
       titleLarge: TextStyle(
@@ -94,7 +95,7 @@ ThemeData buildAppTheme() {
         fontWeight: FontWeight.w600,
         letterSpacing: -0.374,
         height: 1.24,
-        color: appleInk,
+        color: bodyOnDark,
       ),
       // Body
       bodyLarge: TextStyle(
@@ -102,7 +103,7 @@ ThemeData buildAppTheme() {
         fontWeight: FontWeight.w400,
         letterSpacing: -0.374,
         height: 1.47,
-        color: appleInk,
+        color: bodyOnDark,
       ),
       // Body Medium
       bodyMedium: TextStyle(
@@ -110,7 +111,7 @@ ThemeData buildAppTheme() {
         fontWeight: FontWeight.w400,
         letterSpacing: -0.374,
         height: 1.47,
-        color: appleInk,
+        color: bodyOnDark,
       ),
       // Caption Strong
       labelLarge: TextStyle(
@@ -118,7 +119,7 @@ ThemeData buildAppTheme() {
         fontWeight: FontWeight.w600,
         letterSpacing: -0.224,
         height: 1.29,
-        color: appleInk,
+        color: bodyOnDark,
       ),
       // Caption
       labelSmall: TextStyle(
@@ -126,37 +127,42 @@ ThemeData buildAppTheme() {
         fontWeight: FontWeight.w400,
         letterSpacing: -0.224,
         height: 1.43,
-        color: appleInk,
+        color: bodyMuted,
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryBlue,
         foregroundColor: canvasWhite,
+        disabledBackgroundColor: inkMuted.withOpacity(0.3),
+        disabledForegroundColor: inkMuted,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(9999),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
         textStyle: const TextStyle(
           fontSize: 17,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w600,
           letterSpacing: -0.374,
         ),
+        elevation: 0,
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: primaryBlue,
-        side: const BorderSide(color: primaryBlue, width: 1),
+        side: const BorderSide(color: primaryBlue, width: 1.5),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        disabledForegroundColor: inkMuted,
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: primaryBlue,
+        disabledForegroundColor: inkMuted,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
@@ -177,6 +183,7 @@ ThemeData buildAppTheme() {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: darkTile2,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(9999),
         borderSide: const BorderSide(color: inkMuted),
@@ -187,17 +194,30 @@ ThemeData buildAppTheme() {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(9999),
-        borderSide: const BorderSide(color: primaryBlue, width: 1),
+        borderSide: const BorderSide(color: primaryBlue, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(9999),
+        borderSide: const BorderSide(color: errorRed, width: 1),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(9999),
+        borderSide: const BorderSide(color: errorRed, width: 1.5),
       ),
       labelStyle: const TextStyle(
         color: inkMuted,
         fontSize: 17,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
       ),
       hintStyle: TextStyle(
         color: inkMuted.withOpacity(0.7),
         fontSize: 17,
         fontWeight: FontWeight.w400,
+      ),
+      errorStyle: const TextStyle(
+        color: errorRed,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
       ),
     ),
     pageTransitionsTheme: const PageTransitionsTheme(

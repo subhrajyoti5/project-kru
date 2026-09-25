@@ -86,37 +86,38 @@ class _ScannerPageState extends State<ScannerPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // Header with improved visual hierarchy
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Kru',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.374,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.5,
                           color: const Color(0xFFffffff),
                         ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
                     'Scan the QR code from your desktop browser',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontSize: 17,
+                          fontSize: 15,
                           fontWeight: FontWeight.w400,
-                          letterSpacing: -0.374,
-                          color: const Color(0xFFcccccc),
+                          letterSpacing: -0.3,
+                          color: const Color(0xFFb0b0b0),
+                          height: 1.4,
                         ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
-            // QR Camera Container
+            // QR Camera Container with enhanced styling
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -126,11 +127,18 @@ class _ScannerPageState extends State<ScannerPage> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: const Color(0xFF2a2a2c),
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: const Color(0xFF333333),
-                          width: 1,
+                          color: const Color(0xFF3a3a3c),
+                          width: 1.2,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: Stack(
@@ -143,31 +151,33 @@ class _ScannerPageState extends State<ScannerPage> {
                               child: Text(
                                 'Camera inactive in test',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.4),
+                                  color: Colors.white.withOpacity(0.5),
                                   fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: -0.2,
                                 ),
                               ),
                             ),
-                          // Apple-style minimalist corner focus brackets
+                          // Enhanced Apple-style corner brackets with animation
                           IgnorePointer(
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(20),
                               child: Stack(
                                 children: [
                                   Align(
                                     alignment: Alignment.topLeft,
                                     child: Container(
-                                      width: 32,
-                                      height: 32,
+                                      width: 36,
+                                      height: 36,
                                       decoration: const BoxDecoration(
                                         border: Border(
                                           top: BorderSide(
                                             color: Color(0xFF0066cc),
-                                            width: 2.5,
+                                            width: 2.8,
                                           ),
                                           left: BorderSide(
                                             color: Color(0xFF0066cc),
-                                            width: 2.5,
+                                            width: 2.8,
                                           ),
                                         ),
                                       ),
@@ -176,17 +186,17 @@ class _ScannerPageState extends State<ScannerPage> {
                                   Align(
                                     alignment: Alignment.topRight,
                                     child: Container(
-                                      width: 32,
-                                      height: 32,
+                                      width: 36,
+                                      height: 36,
                                       decoration: const BoxDecoration(
                                         border: Border(
                                           top: BorderSide(
                                             color: Color(0xFF0066cc),
-                                            width: 2.5,
+                                            width: 2.8,
                                           ),
                                           right: BorderSide(
                                             color: Color(0xFF0066cc),
-                                            width: 2.5,
+                                            width: 2.8,
                                           ),
                                         ),
                                       ),
@@ -195,17 +205,17 @@ class _ScannerPageState extends State<ScannerPage> {
                                   Align(
                                     alignment: Alignment.bottomLeft,
                                     child: Container(
-                                      width: 32,
-                                      height: 32,
+                                      width: 36,
+                                      height: 36,
                                       decoration: const BoxDecoration(
                                         border: Border(
                                           bottom: BorderSide(
                                             color: Color(0xFF0066cc),
-                                            width: 2.5,
+                                            width: 2.8,
                                           ),
                                           left: BorderSide(
                                             color: Color(0xFF0066cc),
-                                            width: 2.5,
+                                            width: 2.8,
                                           ),
                                         ),
                                       ),
@@ -214,17 +224,17 @@ class _ScannerPageState extends State<ScannerPage> {
                                   Align(
                                     alignment: Alignment.bottomRight,
                                     child: Container(
-                                      width: 32,
-                                      height: 32,
+                                      width: 36,
+                                      height: 36,
                                       decoration: const BoxDecoration(
                                         border: Border(
                                           bottom: BorderSide(
                                             color: Color(0xFF0066cc),
-                                            width: 2.5,
+                                            width: 2.8,
                                           ),
                                           right: BorderSide(
                                             color: Color(0xFF0066cc),
-                                            width: 2.5,
+                                            width: 2.8,
                                           ),
                                         ),
                                       ),
@@ -242,9 +252,9 @@ class _ScannerPageState extends State<ScannerPage> {
               ),
             ),
 
-            // Instructions and Error
+            // Instructions and Error with improved styling
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
               child: Column(
                 children: [
                   Container(
@@ -252,37 +262,39 @@ class _ScannerPageState extends State<ScannerPage> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: const Color(0xFF2a2a2c),
-                      borderRadius: BorderRadius.circular(11),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFF333333),
-                        width: 0.5,
+                        color: const Color(0xFF3a3a3c),
+                        width: 0.8,
                       ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          width: 24,
-                          height: 24,
+                          width: 28,
+                          height: 28,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0066cc).withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(6),
+                            color: const Color(0xFF0066cc).withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(7),
                           ),
                           child: const Icon(
-                            Icons.info_outline,
-                            size: 14,
+                            Icons.info_outlined,
+                            size: 16,
                             color: Color(0xFF2997ff),
+                            weight: 0.5,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 14),
                         Expanded(
                           child: Text(
-                            'Make sure your phone and desktop are on the same Wi-Fi network. Position the camera to capture the QR code.',
+                            'Make sure your phone and desktop are on the same Wi-Fi network. Position the camera to capture the QR code clearly.',
                             style: TextStyle(
-                              fontSize: 14,
-                              height: 1.43,
-                              letterSpacing: -0.224,
-                              color: const Color(0xFFcccccc),
+                              fontSize: 13.5,
+                              height: 1.5,
+                              letterSpacing: -0.2,
+                              fontWeight: FontWeight.w400,
+                              color: const Color(0xFFb0b0b0),
                             ),
                           ),
                         ),
@@ -290,7 +302,7 @@ class _ScannerPageState extends State<ScannerPage> {
                     ),
                   ),
                   if (_error != null) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     StatusBanner(message: _error!, error: true),
                   ],
                 ],
